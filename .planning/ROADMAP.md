@@ -77,10 +77,11 @@ Plans:
   2. /diagnose command runs full diagnostic suite combining security, code quality, and version checks into single report
   3. /audit command runs focused security-only scan for rapid assessments
   4. /status command shows all connected sites with sync state and recent findings summary
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 04-01-PLAN.md — /diagnose command: full orchestration workflow with three modes, NL parsing, inline progress, error recovery
+- [ ] 04-02-PLAN.md — /status enhancements, plugin manifest v2.0.0, /audit cleanup
 
 ## Progress
 
@@ -92,4 +93,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Plugin Foundation | 1/1 | Complete | 2026-02-16 |
 | 2. Connection & File Sync | 2/2 | Complete | 2026-02-16 |
 | 3. Diagnostic Skills & Reporting | 4/4 | Complete | 2026-02-17 |
-| 4. Command Workflows | 0/TBD | Not started | - |
+| 4. Command Workflows | 0/2 | Planning complete | - |
