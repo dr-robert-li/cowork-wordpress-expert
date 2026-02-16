@@ -1,6 +1,6 @@
 {
   "name": "wordpress-expert",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Expert WordPress diagnostics: security audits, performance analysis, code quality review, and plugin conflict resolution for site reliability.",
   "author": {
     "name": "Robert Li"
@@ -11,7 +11,7 @@
       "status": "implemented"
     },
     "status": {
-      "description": "View connected sites, sync status, and manage site profiles (list, remove, default, rename)",
+      "description": "View connected sites, sync status, diagnostic health summaries, and manage site profiles (list, remove, default, rename)",
       "status": "implemented"
     },
     "diagnose": {
@@ -21,6 +21,36 @@
     "audit": {
       "description": "Run focused security audit on a connected WordPress site",
       "status": "placeholder"
+    }
+  },
+  "skills": {
+    "diagnostic-core-integrity": {
+      "description": "WP-CLI verify-checksums for core file integrity checking",
+      "status": "implemented"
+    },
+    "diagnostic-config-security": {
+      "description": "wp-config.php security analysis for debug mode, salts, file editing",
+      "status": "implemented"
+    },
+    "diagnostic-user-audit": {
+      "description": "User account security audit for admin username, role counts, inactive users",
+      "status": "implemented"
+    },
+    "diagnostic-version-audit": {
+      "description": "WordPress core, plugin, and theme version and update status checking",
+      "status": "implemented"
+    },
+    "diagnostic-malware-scan": {
+      "description": "Pattern-based suspicious code detection for backdoors, obfuscation, and malicious patterns",
+      "status": "implemented"
+    },
+    "diagnostic-code-quality": {
+      "description": "AI-powered code quality analysis for active theme and custom plugins",
+      "status": "implemented"
+    },
+    "report-generator": {
+      "description": "Compiles diagnostic findings into structured markdown reports with A-F health grades and archive management",
+      "status": "implemented"
     }
   }
 }

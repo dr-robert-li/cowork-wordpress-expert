@@ -1,6 +1,6 @@
 ---
 name: status
-description: View connected sites, sync status, and manage site profiles
+description: View connected sites, sync status, diagnostic health summaries, and manage site profiles
 usage: /status [subcommand] [args]
 subcommands:
   - (none): List all connected sites with status details
@@ -11,7 +11,7 @@ subcommands:
 
 # /status Command
 
-This command manages WordPress site profiles and displays connection status. It provides four operations: listing all sites, removing profiles, setting the default site, and renaming profiles.
+This command manages WordPress site profiles and displays connection status with inline diagnostic summaries. It provides four operations: listing all sites (with health grades from latest diagnostic scans), removing profiles, setting the default site, and renaming profiles.
 
 ## Usage Patterns
 
@@ -102,6 +102,36 @@ jq -r '.sites | to_entries[] | @json' sites.json | while IFS= read -r site_json;
   echo "- **Local files:** $LOCAL_PATH"
   echo "- **Environment:** $ENVIRONMENT"
   echo "- **Notes:** $NOTES"
+
+  # Diagnostic summary from latest scan report
+  REPORT_PATH="memory/${SITE_NAME}/latest.md"
+  if [ -f "$REPORT_PATH" ]; then
+    # Extract health grade from report (first line matching "Health Grade:")
+    HEALTH_GRADE=$(grep "^\*\*Health Grade:\*\*" "$REPORT_PATH" | sed 's/.*\*\*Health Grade:\*\* //')
+
+    # Extract finding counts from summary table
+    CRITICAL_COUNT=$(grep "| Critical |" "$REPORT_PATH" | sed 's/.*| //' | sed 's/ .*//' | tr -d ' ')
+    WARNING_COUNT=$(grep "| Warning |" "$REPORT_PATH" | sed 's/.*| //' | sed 's/ .*//' | tr -d ' ')
+    INFO_COUNT=$(grep "| Info |" "$REPORT_PATH" | sed 's/.*| //' | sed 's/ .*//' | tr -d ' ')
+
+    # Extract scan date
+    SCAN_DATE=$(grep "^\*\*Date:\*\*" "$REPORT_PATH" | sed 's/.*\*\*Date:\*\* //')
+
+    # Extract top critical findings (up to 3)
+    TOP_CRITICAL=$(grep -A 1 "^\*\*Severity:\*\* Critical" "$REPORT_PATH" | grep "^\*\*Summary:\*\*" | head -3 | sed 's/\*\*Summary:\*\* /  - /')
+
+    echo "- **Health Grade:** $HEALTH_GRADE"
+    echo "- **Last Scan:** $SCAN_DATE"
+    echo "- **Findings:** $CRITICAL_COUNT critical, $WARNING_COUNT warning, $INFO_COUNT info"
+
+    if [ -n "$TOP_CRITICAL" ]; then
+      echo "- **Top Issues:**"
+      echo "$TOP_CRITICAL"
+    fi
+  else
+    echo "- **Diagnostics:** No scan results yet. Run /diagnose to analyze."
+  fi
+
   echo ""
 done
 
