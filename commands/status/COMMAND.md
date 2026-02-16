@@ -128,8 +128,23 @@ jq -r '.sites | to_entries[] | @json' sites.json | while IFS= read -r site_json;
       echo "- **Top Issues:**"
       echo "$TOP_CRITICAL"
     fi
+
+    # Suggested next action based on report age and findings
+    SCAN_EPOCH=$(date -j -f "%Y-%m-%d" "$(echo $SCAN_DATE | cut -d' ' -f1)" "+%s" 2>/dev/null || echo "0")
+    NOW=$(date +%s)
+    DAYS_SINCE_SCAN=$(( (NOW - SCAN_EPOCH) / 86400 ))
+
+    if [ "$CRITICAL_COUNT" -gt 0 ]; then
+      echo "- **Next action:** Fix $CRITICAL_COUNT critical issue(s), then re-scan"
+    elif [ $DAYS_SINCE_SCAN -gt 7 ]; then
+      echo "- **Next action:** Re-scan recommended (last scan $DAYS_SINCE_SCAN days ago)"
+    else
+      NEXT_SCAN_DAYS=$((7 - DAYS_SINCE_SCAN))
+      echo "- **Next action:** Healthy -- next scan recommended in $NEXT_SCAN_DAYS day(s)"
+    fi
   else
     echo "- **Diagnostics:** No scan results yet. Run /diagnose to analyze."
+    echo "- **Next action:** Run /diagnose to analyze this site"
   fi
 
   echo ""
@@ -143,6 +158,12 @@ DEFAULT_SITE=$(jq -r '.sites | to_entries[] | select(.value.is_default == true) 
 if [ -n "$DEFAULT_SITE" ]; then
   echo "Reconnect: \`/connect $DEFAULT_SITE\`"
 fi
+
+echo ""
+echo "## Available Commands"
+echo "- /connect [site-name] -- Connect to a WordPress site"
+echo "- /diagnose [mode] [on site-name] -- Run diagnostic scan (modes: full, security only, code only)"
+echo "- /status -- View connected sites and scan results"
 ```
 
 ### 2. Remove a Site Profile (CONN-05)
