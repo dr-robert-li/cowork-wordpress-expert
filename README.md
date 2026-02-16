@@ -6,7 +6,7 @@ Nothing is installed on the WordPress site. The plugin operates entirely from yo
 
 ## Requirements
 
-- [Claude Code](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code) (CLI)
+- [Claude Desktop](https://claude.ai/download) with CoWork support
 - SSH access to the target WordPress site
 - `rsync` installed locally
 - `jq` installed locally
@@ -14,14 +14,16 @@ Nothing is installed on the WordPress site. The plugin operates entirely from yo
 
 ## Installation
 
-Clone this repo into your project directory (or anywhere you want to run it from):
-
-```bash
-git clone https://github.com/your-org/wordpress-expert.git
-cd wordpress-expert
-```
-
-Claude Code automatically detects the `.claude-plugin/plugin.json` and loads the plugin.
+1. Download or clone this repository
+2. Zip the folder:
+   ```bash
+   zip -r wordpress-expert.zip wordpress-expert/ -x "*.git*" "*.planning*" ".sites/*" "memory/*" "sites.json"
+   ```
+3. Open **Claude Desktop**
+4. Go to the **CoWork** tab in the sidebar
+5. Click **Add Plugin** (or the + button)
+6. Select **Upload Plugin** and choose the `wordpress-expert.zip` file
+7. The plugin will appear in your CoWork tab ready to use
 
 ## Commands
 
