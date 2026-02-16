@@ -1,0 +1,22 @@
+{
+  "sites": [
+    {
+      "name": "example-production",
+      "ssh_host": "prod-alias",
+      "ssh_user": "wpuser",
+      "ssh_key": "~/.ssh/prod-key",
+      "wp_path": "/var/www/html",
+      "wp_url": "https://example.com",
+      "description": "Production site - uses SSH config alias"
+    },
+    {
+      "name": "example-staging",
+      "ssh_host": "staging.example.com",
+      "ssh_user": "deployer",
+      "ssh_key": null,
+      "wp_path": "/home/deployer/public_html",
+      "wp_url": "https://staging.example.com",
+      "description": "Staging site - direct hostname, default SSH key"
+    }
+  ]
+}
