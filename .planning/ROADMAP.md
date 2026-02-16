@@ -60,10 +60,13 @@ Plans:
   4. Plugin performs AI-powered code quality analysis detecting anti-patterns and deprecated functions with file:line references
   5. Findings are generated as structured markdown reports with severity ratings, technical details, and non-technical summaries
   6. Reports are stored in memory/ directory and accessible via /status command
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD
+- [ ] 03-01-PLAN.md — Security diagnostic skills: core integrity, config security, user audit
+- [ ] 03-02-PLAN.md — Version audit and malware scan skills
+- [ ] 03-03-PLAN.md — AI-powered code quality analysis skill
+- [ ] 03-04-PLAN.md — Report generator skill, /status diagnostic display, plugin manifest update
 
 ### Phase 4: Command Workflows
 **Goal**: User-facing commands orchestrate diagnostic skills into complete, usable workflows
@@ -88,5 +91,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation | 0/TBD | Not started | - |
 | 2. Connection & File Sync | 0/2 | Planned | - |
-| 3. Diagnostic Skills & Reporting | 0/TBD | Not started | - |
+| 3. Diagnostic Skills & Reporting | 0/4 | Planned | - |
 | 4. Command Workflows | 0/TBD | Not started | - |
