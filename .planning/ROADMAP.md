@@ -73,10 +73,10 @@ Plans:
 **Depends on**: Phase 3
 **Requirements**: CMDS-01, CMDS-02, CMDS-03, CMDS-04
 **Success Criteria** (what must be TRUE):
-  1. /connect command establishes SSH connection, syncs files, verifies WP-CLI, and saves profile in one workflow
-  2. /diagnose command runs full diagnostic suite combining security, code quality, and version checks into single report
-  3. /audit command runs focused security-only scan for rapid assessments
-  4. /status command shows all connected sites with sync state and recent findings summary
+  1. /diagnose command runs full diagnostic suite across all skills with inline progress feedback and skip-on-error recovery
+  2. /diagnose supports security-only and code-only modes via natural language invocation
+  3. /audit functionality is covered by /diagnose security-only mode (no separate /audit command)
+  4. /status shows connected sites with health summaries, available commands, and suggested next actions
 **Plans:** 2 plans
 
 Plans:
