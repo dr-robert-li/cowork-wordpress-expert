@@ -34,6 +34,8 @@ Progress: [██░░░░░░░░] 33%
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | Phase 01-plugin-foundation P01 | 01 | 181s | 2 | 8 |
+| Phase 01 P02 | 277 | 2 tasks | 5 files |
+| Phase 01 P03 | 6 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
