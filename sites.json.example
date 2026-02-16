@@ -1,22 +1,34 @@
 {
-  "sites": [
-    {
-      "name": "example-production",
-      "ssh_host": "prod-alias",
-      "ssh_user": "wpuser",
+  "sites": {
+    "example-com": {
+      "host": "example.com",
+      "user": "wpuser",
       "ssh_key": "~/.ssh/prod-key",
       "wp_path": "/var/www/html",
-      "wp_url": "https://example.com",
-      "description": "Production site - uses SSH config alias"
+      "local_path": ".sites/example-com",
+      "wp_version": "6.4.3",
+      "site_url": "https://example.com",
+      "wp_cli_path": "/usr/local/bin/wp",
+      "last_sync": "2026-02-16T12:00:00Z",
+      "created_at": "2026-02-16T10:00:00Z",
+      "environment": "production",
+      "is_default": true,
+      "notes": "Main production site"
     },
-    {
-      "name": "example-staging",
-      "ssh_host": "staging.example.com",
-      "ssh_user": "deployer",
+    "staging-example-com": {
+      "host": "staging.example.com",
+      "user": "deployer",
       "ssh_key": null,
       "wp_path": "/home/deployer/public_html",
-      "wp_url": "https://staging.example.com",
-      "description": "Staging site - direct hostname, default SSH key"
+      "local_path": ".sites/staging-example-com",
+      "wp_version": "6.4.3",
+      "site_url": "https://staging.example.com",
+      "wp_cli_path": "/usr/local/bin/wp",
+      "last_sync": "2026-02-16T11:00:00Z",
+      "created_at": "2026-02-15T09:00:00Z",
+      "environment": "staging",
+      "is_default": false,
+      "notes": "Staging mirror of production"
     }
-  ]
+  }
 }

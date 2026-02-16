@@ -46,10 +46,11 @@ Log every action taken. Every diagnostic session, code change, test run, and rec
 **Critical safety protocols for file operations:**
 
 - **rsync ALWAYS uses --dry-run first** — Review dry-run output before executing actual sync
-- **rsync default exclusions** — Always exclude: wp-config.php, *.log, .git, node_modules, .env
+- **rsync default exclusions** — Always exclude: wp-content/uploads/, wp-content/cache/, wp-content/w3tc-cache/, node_modules/, vendor/, .git/, .env
+- **Log files NOT excluded** — Log files are useful for diagnostics and are NOT excluded by default
 - **NEVER use rsync --delete flag** — Risk of deleting production files; use explicit removal commands if needed
 - **SSH credentials are never logged** — Never include passwords, private keys, or connection strings in output
-- **Cross-platform compatibility** — macOS uses openrsync (not GNU rsync); always test with --dry-run to verify flag compatibility
+- **Cross-platform compatibility** — macOS default rsync (openrsync) does not support --info=progress2; use -v flag instead. Check with `rsync --version`
 
 ---
 
@@ -61,7 +62,8 @@ This section maintains active state during diagnostic sessions. It is populated 
 
 **Status:** Not connected
 
-*Populated by /wpe:connect or equivalent connection command*
+<!-- Populated by /connect command -->
+<!-- Fields: name, host, user, wp_path, local_path, wp_version, site_url, wp_cli_path, last_sync -->
 
 ### Active Diagnostic Session
 
