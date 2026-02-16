@@ -1,8 +1,26 @@
 {
   "name": "wordpress-expert",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Expert WordPress diagnostics: security audits, performance analysis, code quality review, and plugin conflict resolution for site reliability.",
   "author": {
     "name": "Robert Li"
+  },
+  "commands": {
+    "connect": {
+      "description": "Connect to a WordPress site via SSH, detect WP-CLI, sync files, and save profile",
+      "status": "implemented"
+    },
+    "status": {
+      "description": "View connected sites, sync status, and manage site profiles (list, remove, default, rename)",
+      "status": "implemented"
+    },
+    "diagnose": {
+      "description": "Run full diagnostic suite on a connected WordPress site",
+      "status": "placeholder"
+    },
+    "audit": {
+      "description": "Run focused security audit on a connected WordPress site",
+      "status": "placeholder"
+    }
   }
 }
