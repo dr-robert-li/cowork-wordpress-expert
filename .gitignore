@@ -1,11 +1,20 @@
 # Credentials and connection config
 sites.json
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.env
+.env.*
 
 # Synced WordPress files (can contain credentials, API keys)
 .sites/
 
 # Diagnostic history and findings (may contain sensitive data)
 memory/
+
+# MCP configuration (may contain API keys)
+.mcp.json
 
 # Logs
 *.log
