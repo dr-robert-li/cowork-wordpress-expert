@@ -1,0 +1,8 @@
+{
+  "name": "wordpress-expert",
+  "version": "1.0.0",
+  "description": "Expert WordPress diagnostics: security audits, performance analysis, code quality review, and plugin conflict resolution for site reliability.",
+  "author": {
+    "name": "Robert Li"
+  }
+}
