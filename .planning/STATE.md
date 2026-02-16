@@ -5,37 +5,37 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Securely connect to any WordPress site, pull its full codebase and data locally, and deliver expert-level diagnostics with evidence-backed findings — without requiring anything installed on the WordPress site itself.
-**Current focus:** Phase 1: Plugin Foundation
+**Current focus:** Phase 2: Connection & File Sync
 
 ## Current Position
 
-Phase: 1 of 4 (Plugin Foundation)
-Plan: 1 of 3 in current phase
-Status: Executing phase 01-plugin-foundation
-Last activity: 2026-02-16 — Completed 01-plugin-foundation-01-PLAN.md (plugin skeleton)
+Phase: 2 of 4 (Connection & File Sync)
+Plan: 2 of 2 in current phase
+Status: Executing phase 02-connection-file-sync
+Last activity: 2026-02-16 — Completed 02-connection-file-sync-01-PLAN.md (/connect command)
 
-Progress: [██░░░░░░░░] 33%
+Progress: [████░░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 181 seconds (3 minutes)
-- Total execution time: 0.05 hours
+- Total plans completed: 2
+- Average duration: 212 seconds (3.5 minutes)
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-plugin-foundation | 1 | 181s | 181s |
+| 02-connection-file-sync | 1 | 244s | 244s |
 
 **Recent Completions:**
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
+| Phase 02-connection-file-sync P01 | 01 | 244s | 2 | 4 |
 | Phase 01-plugin-foundation P01 | 01 | 181s | 2 | 8 |
-| Phase 01 P02 | 277 | 2 tasks | 5 files |
-| Phase 01 P03 | 6 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -50,6 +50,12 @@ Recent decisions affecting current work:
 - Read + propose (not push) — safety, user reviews patches before applying
 - sites.json + memory/ split — connection config separate from diagnostic findings/history
 - WP-CLI over SSH for DB — leverages existing WP tooling, no direct DB credentials needed
+- Conversational SSH gathering — one detail at a time for better UX
+- SSH config alias resolution using ssh -G — canonical values handling includes/wildcards
+- Auto-save every connection to sites.json — no user prompt needed
+- Object-keyed sites.json format — O(1) profile lookup performance
+- macOS openrsync compatibility — detect variant, use -v instead of --info=progress2
+- Log files NOT excluded from sync — useful for diagnostics
 
 ### Pending Todos
 
@@ -65,5 +71,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16 — Plan execution
-Stopped at: Completed 01-plugin-foundation-01-PLAN.md
+Stopped at: Completed 02-connection-file-sync-01-PLAN.md
 Resume file: None
