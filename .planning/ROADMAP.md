@@ -43,10 +43,11 @@ Plans:
   3. Plugin detects WP-CLI availability and path on the remote server automatically
   4. Files sync from remote to local with exclusions for uploads/cache, size warnings, and permission normalization
   5. User can view status of connected sites including last sync time via /status command
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 02-01-PLAN.md — /connect command: SSH connection, WP detection, WP-CLI discovery, file sync, auto-save profile
+- [ ] 02-02-PLAN.md — /status command: site listing, profile management (remove, default, rename), plugin.json update
 
 ### Phase 3: Diagnostic Skills & Reporting
 **Goal**: Plugin performs comprehensive security scans, code quality analysis, and generates evidence-based markdown reports
@@ -86,6 +87,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation | 0/TBD | Not started | - |
-| 2. Connection & File Sync | 0/TBD | Not started | - |
+| 2. Connection & File Sync | 0/2 | Planned | - |
 | 3. Diagnostic Skills & Reporting | 0/TBD | Not started | - |
 | 4. Command Workflows | 0/TBD | Not started | - |
