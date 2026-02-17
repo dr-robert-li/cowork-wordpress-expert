@@ -65,6 +65,39 @@ if [ -z "$SITE_NAME" ]; then
 fi
 ```
 
+## Section 1.5: Quick Intake (Optional)
+
+If enabled in config.json, ask the user one quick question before scanning to optionally focus the diagnostic.
+
+```bash
+# Check config for quick intake toggle
+CONFIG_FILE="config.json"
+QUICK_INTAKE_ENABLED=false
+if [ -f "$CONFIG_FILE" ]; then
+  QUICK_INTAKE_ENABLED=$(jq -r '.behavior.quick_diagnose_asks_context // false' "$CONFIG_FILE")
+fi
+
+if [ "$QUICK_INTAKE_ENABLED" == "true" ]; then
+  echo "Before I scan, anything specific you're concerned about? (Type 'skip' for standard scan)"
+  echo ""
+
+  # Read user response
+  # If user provides context:
+  #   - Note the concern in memory/{site}/active-case.json
+  #   - Adjust skill execution order (priority skills first)
+  #   - Proceed with diagnostics
+  # If user says "skip" or provides no input:
+  #   - Proceed with standard scan (no changes)
+
+  # Create minimal active-case.json if user provided context
+  MEMORY_DIR="memory/${SITE_NAME}"
+  mkdir -p "$MEMORY_DIR"
+  # active-case.json written here if user provides a concern
+fi
+```
+
+**Behavior:** This is a single optional question, not a full intake. It lets users optionally steer the scan without requiring the full `/investigate` workflow. When skipped, `/diagnose` behaves exactly as before.
+
 ## Section 2: Connection Verification & Auto-Connect
 
 Verify site profile exists and auto-connect if needed before running diagnostics.

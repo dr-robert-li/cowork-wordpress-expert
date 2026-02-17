@@ -1,0 +1,30 @@
+{
+  "name": "wpxpert",
+  "version": "2.1.0",
+  "description": "WordPress diagnostics expert for Claude Code — structured investigations with intake, reconnaissance, parallel execution, and verification",
+  "author": "Robert Li",
+  "license": "MIT",
+  "bin": {
+    "wpxpert": "bin/install.js"
+  },
+  "files": [
+    "bin/",
+    "commands/",
+    "skills/",
+    "config.json",
+    "CLAUDE.md",
+    "VERSION"
+  ],
+  "keywords": [
+    "wordpress",
+    "diagnostics",
+    "security",
+    "claude",
+    "claude-code",
+    "cowork"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robertli/wpxpert"
+  }
+}

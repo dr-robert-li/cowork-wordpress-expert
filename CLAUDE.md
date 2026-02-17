@@ -31,6 +31,21 @@ Before beginning any diagnostic or remediation work, gather sufficient context t
 
 **Readiness Gate:** Before proceeding, state: "Based on what you've told me, here's what I understand: [summary]. Here's what I'm assuming: [assumptions]. Here's what I still don't know: [gaps]. Shall I proceed, or do you want to fill in any gaps first?"
 
+### Investigation Workflow
+
+For thorough diagnostics, use the `/investigate` command which follows a structured workflow:
+
+1. **Intake** — Gather context about the user's concern (skills/intake/SKILL.md)
+2. **Site Scout** — SSH reconnaissance for environment data and recent changes (skills/site-scout/SKILL.md)
+3. **Plan** — Choose diagnostic skills based on concern type and scout findings
+4. **Execute** — Run skills in parallel waves via Task() subagents
+5. **Review** — Verify findings address the original concern (skills/scan-reviewer/SKILL.md)
+6. **Report** — Generate report with investigation context and confidence rating
+
+Each step is configurable via `config.json`. Quick scans via `/diagnose` skip intake, scouting, and review.
+
+Case history is tracked in `memory/{site}/case-log.json` for cross-session context.
+
 ### Evidence-Based Diagnosis
 
 Every finding must be backed by evidence: code references (file:line), log entries, screenshots, database queries, network traces, or configuration values. Do not speculate without labeling it as such.
@@ -69,7 +84,15 @@ This section maintains active state during diagnostic sessions. It is populated 
 
 **Status:** No active session
 
-*Populated by /wpe:diagnose, /wpe:audit, or skill-based diagnostic commands*
+*Populated by /diagnose or /investigate commands*
+
+### Active Investigation
+
+**Status:** No active investigation
+
+<!-- Populated by /investigate command -->
+<!-- Fields: case_id, concern, urgency, concern_type, diagnostic_plan, confidence -->
+<!-- Cleared after investigation completes and case-log.json is updated -->
 
 ### Recent Findings
 

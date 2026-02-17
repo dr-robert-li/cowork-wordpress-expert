@@ -1,7 +1,7 @@
 {
   "name": "wordpress-expert",
-  "version": "2.0.0",
-  "description": "Expert WordPress diagnostics: security audits, performance analysis, code quality review, and plugin conflict resolution for site reliability.",
+  "version": "2.1.0",
+  "description": "Expert WordPress diagnostics: structured investigations with intake questioning, site reconnaissance, parallel execution, and findings verification.",
   "author": {
     "name": "Robert Li"
   },
@@ -16,6 +16,10 @@
     },
     "diagnose": {
       "description": "Run diagnostic suite with full, security-only, or code-only modes on connected WordPress sites",
+      "status": "implemented"
+    },
+    "investigate": {
+      "description": "Full-workflow investigation: intake questioning, site scouting, smart skill planning, parallel execution, and findings verification",
       "status": "implemented"
     }
   },
@@ -46,6 +50,18 @@
     },
     "report-generator": {
       "description": "Compiles diagnostic findings into structured markdown reports with A-F health grades and archive management",
+      "status": "implemented"
+    },
+    "intake": {
+      "description": "Structured context gathering before diagnostics — symptoms, timeline, environment, scope, urgency, and prior work",
+      "status": "implemented"
+    },
+    "site-scout": {
+      "description": "Pre-diagnostic SSH reconnaissance — environment data, recent changes, error logs, and server health",
+      "status": "implemented"
+    },
+    "scan-reviewer": {
+      "description": "Post-diagnostic verification — checks findings address the original concern and are internally consistent",
       "status": "implemented"
     }
   }

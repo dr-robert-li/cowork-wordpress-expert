@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-02-18
+
+### Added
+
+- `/investigate` command with full structured workflow
+  - Intake questioning to gather context before scanning (symptoms, timeline, urgency, scope)
+  - Site scouting via SSH reconnaissance (error logs, recent changes, PHP environment)
+  - Smart diagnostic planning based on concern type and scout findings
+  - Parallel wave execution of diagnostic skills via Task() subagents
+  - Findings verification to ensure results address the original concern
+  - Confidence rating (High/Medium/Low) appended to reports
+  - Case history tracking in `memory/{site}/case-log.json`
+  - Emergency detection with auto-proceed security scan
+- Intake skill (`skills/intake/SKILL.md`) — conversational context gathering
+- Site Scout skill (`skills/site-scout/SKILL.md`) — SSH environment reconnaissance
+- Scan Reviewer skill (`skills/scan-reviewer/SKILL.md`) — post-scan findings verification
+- `config.json` with workflow toggles (intake, scouting, planning, parallel, review)
+- Quick intake question for `/diagnose` (optional, configurable)
+- Claude Code CLI installation via `npx wpxpert`
+- `bin/install.js` installer for Claude Code addon distribution
+- Case log schema documentation (`sites.json.schema.md`)
+
 ## [2.0.0] - 2026-02-17
 
 ### Added

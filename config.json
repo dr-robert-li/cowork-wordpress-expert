@@ -1,0 +1,14 @@
+{
+  "workflow": {
+    "intake_questions": true,
+    "site_scouting": true,
+    "scan_planning": true,
+    "parallel_skills": true,
+    "findings_review": true
+  },
+  "behavior": {
+    "quick_diagnose_asks_context": true,
+    "auto_resync_before_scan": true,
+    "track_case_history": true
+  }
+}
