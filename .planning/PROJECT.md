@@ -8,31 +8,48 @@ A Claude CoWork plugin that turns Claude into a senior WordPress systems analyst
 
 Securely connect to any WordPress site, pull its full codebase and data locally, and deliver expert-level diagnostics with evidence-backed findings — without requiring anything installed on the WordPress site itself.
 
+## Current Milestone: v2.0 Database, Performance & Multi-Source Access
+
+**Goal:** Add database health analysis, performance diagnostics, architecture review, findings trends, and support for local/Docker/git-based WordPress sites alongside existing SSH remote access.
+
+**Target features:**
+- Database optimization analysis (autoload bloat, transients, revisions)
+- Performance bottleneck detection (N+1 queries, expensive hooks, blocking HTTP)
+- HTTPS/SSL configuration audit
+- File permissions check against WP recommendations
+- Architecture review (CPT misuse, options bloat, caching, hook abuse)
+- Findings trends tracking (improving/degrading posture over time)
+- Local WordPress directory support (MAMP, Flywheel, etc.)
+- Docker container WordPress support
+- Git repository support (clone remote + point at local)
+- Direct DB access via wp-config.php credentials (local sites)
+
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Plugin follows CoWork plugin structure — v1.0
+- ✓ SSH connection, file sync, site profiles — v1.0
+- ✓ Full diagnostic suite (security, code quality, versions) — v1.0
+- ✓ Evidence-based findings with severity ratings — v1.0
+- ✓ Structured markdown reports — v1.0
+- ✓ Memory-based findings history — v1.0
+- ✓ /connect, /diagnose, /status commands — v1.0
+- ✓ /investigate with intake → scout → plan → execute → review — v2.1.0
+- ✓ CLI distribution via npx wpxpert — v2.1.0
 
 ### Active
 
-- [ ] Plugin follows Claude CoWork plugin structure (plugin.json, commands/, skills/, .mcp.json)
-- [ ] User can connect to a WordPress site via SSH (host, key, user, remote WP path)
-- [ ] Files are synced locally via rsync into a subdirectory within the plugin working directory
-- [ ] User can save site profiles (connection details stored in sites.json)
-- [ ] User can run one-off connections without saving a profile
-- [ ] User can run a full diagnostic suite (security, performance, code quality, architecture)
-- [ ] User can run a focused security audit
-- [ ] User can view status of connected sites, sync state, and recent findings
-- [ ] Database access via WP-CLI over SSH for live queries
-- [ ] Database dump and local analysis for deep inspection
-- [ ] Findings are evidence-based with file paths, line numbers, and severity ratings
-- [ ] Diagnostic reports generated in structured markdown format
-- [ ] Plugin proposes fixes as patch files — user decides whether to apply
-- [ ] Findings history stored in CoWork memory system (memory/ directory)
-- [ ] Connection details stored in sites.json, findings/history in memory/
-- [ ] Communication adapts for technical and non-technical audiences
-- [ ] SSH credentials are never logged, committed, or exposed in output
+- [ ] Database optimization analysis (autoload bloat, transients, revisions)
+- [ ] Performance bottleneck detection (N+1 queries, expensive hooks)
+- [ ] HTTPS/SSL configuration audit
+- [ ] File permissions check
+- [ ] Architecture review (CPT, options, caching, hooks)
+- [ ] Findings trends tracking over time
+- [ ] Local WordPress directory support
+- [ ] Docker container WordPress support
+- [ ] Git repository support (clone + local)
+- [ ] Direct DB access via wp-config.php credentials
 
 ### Out of Scope
 
@@ -40,7 +57,10 @@ Securely connect to any WordPress site, pull its full codebase and data locally,
 - WordPress plugin installation on the remote site — this is agent-side only
 - Real-time monitoring or continuous scanning — on-demand diagnostics only
 - GUI or web dashboard — works through Claude's conversational interface
-- Support for non-SSH access methods (FTP, SFTP-only, cPanel API) — SSH only for v1
+- Non-SSH remote access (FTP, SFTP-only, cPanel API) — SSH for remote, local/git for others
+- Malware removal/cleanup — detection only
+- Full code refactoring — diagnostic tool, not development service
+- Multi-site batch comparison matrix — defer to v3
 
 ## Context
 
@@ -71,4 +91,4 @@ Securely connect to any WordPress site, pull its full codebase and data locally,
 | WP-CLI over SSH for DB | Leverages existing WP tooling, no direct DB credentials needed | — Pending |
 
 ---
-*Last updated: 2026-02-16 after initialization*
+*Last updated: 2026-02-18 after v2.0 milestone start*
