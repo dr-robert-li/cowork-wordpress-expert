@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 6 (Database Health & Infrastructure Audits) — planned (3 plans, 2 waves)
-Plan: 06-01, 06-02, 06-03 ready
-Status: Phase 6 planned — ready for execution
-Last activity: 2026-02-19 — Phase 6 planned (3 plans in 2 waves, verification passed)
+Phase: 6 (Database Health & Infrastructure Audits) — in progress (3 plans, 2 waves)
+Plan: 06-02 complete, 06-03 pending
+Status: Phase 6 executing — plans 06-01 and 06-02 complete (wave 1 done), 06-03 pending (wave 2)
+Last activity: 2026-02-19 — 06-02 complete (HTTPS audit + file permissions skills)
 
 ```
-[v1 complete] [5:done] [6:----] [7:----] [8:----]
+[v1 complete] [5:done] [6:--**] [7:----] [8:----]
 ```
 
 ## Performance Metrics
@@ -34,6 +34,7 @@ Last activity: 2026-02-19 — Phase 6 planned (3 plans in 2 waves, verification 
 | 03-diagnostic-skills-reporting | 4 | 689s | 172s |
 | 04-command-workflows | 2 | 319s | 160s |
 | 05-multi-source-connection | 2/2 | 442s | 221s |
+| 06-database-health-infrastructure-audits | 2/3 | 249s (06-02 only) | ~125s |
 
 ## Accumulated Context
 
@@ -70,6 +71,11 @@ Recent decisions affecting current work:
 - v2.0: WP_CLI_PREFIX pattern routes WP-CLI invocation by source type (ssh=SSH, docker=docker exec, local=direct)
 - v2.0: Git sources always skip WP-CLI skills even when local wp binary exists — no live DB in git checkouts
 - v2.0: Capability gating consistent across /connect Section 10, /diagnose Section 4, and /status capabilities line
+- v2.0: HTTPS skill is NOT in WP_CLI_SKILLS array — dual-gated internally; Part B (grep) runs without WP-CLI for any source with LOCAL_PATH
+- v2.0: File permissions skill is SSH-only; non-SSH sources get INFR-PERM-SKP explaining rsync normalizes permissions
+- v2.0: debug.log only flagged when WP_DEBUG=enabled AND file exists AND world-readable
+- v2.0: wp-config.php world-readable detection uses octal bit ops ($((8#$PERMS & 4))), not exact value match — catches 644, 755, 777 etc.
+- v2.0: Self-gating skill pattern — skills check own preconditions (source_type, WP_CLI_AVAILABLE, LOCAL_PATH) rather than relying on skill array
 
 ### Pending Todos
 
@@ -83,6 +89,6 @@ Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 
 
 ## Session Continuity
 
-Last session: 2026-02-19 — Phase 6 planned
-Stopped at: Phase 6 planning complete (3 plans, verification passed)
-Resume with: `/gsd:execute-phase 6`
+Last session: 2026-02-19 — Phase 6 executing
+Stopped at: Completed 06-02-PLAN.md (HTTPS audit + file permissions skills)
+Resume with: `/gsd:execute-phase 6` (plan 06-03 remaining)

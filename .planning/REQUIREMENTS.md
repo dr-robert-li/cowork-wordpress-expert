@@ -84,8 +84,8 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 
 ### Infrastructure Audits
 
-- [ ] **INFR-01**: User can audit HTTPS/SSL configuration (force-SSL constants, mixed content indicators, certificate status)
-- [ ] **INFR-02**: User can check file and directory permissions against WordPress security recommendations
+- [x] **INFR-01**: User can audit HTTPS/SSL configuration (force-SSL constants, mixed content indicators, certificate status)
+- [x] **INFR-02**: User can check file and directory permissions against WordPress security recommendations
 
 ### Performance Detection
 
@@ -189,8 +189,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DBHL-03 | Phase 6 | Pending |
 | DBHL-04 | Phase 6 | Pending |
 | DBHL-05 | Phase 6 | Pending |
-| INFR-01 | Phase 6 | Pending |
-| INFR-02 | Phase 6 | Pending |
+| INFR-01 | Phase 6 | Complete |
+| INFR-02 | Phase 6 | Complete |
 | PERF-01 | Phase 7 | Pending |
 | PERF-02 | Phase 7 | Pending |
 | PERF-03 | Phase 7 | Pending |
