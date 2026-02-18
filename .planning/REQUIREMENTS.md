@@ -76,11 +76,11 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 
 ### Database Health
 
-- [ ] **DBHL-01**: User can analyze wp_options autoload bloat (total size, top offenders, plugin attribution)
-- [ ] **DBHL-02**: User can detect transient buildup and expired transient count
-- [ ] **DBHL-03**: User can check post revision accumulation and recommend cleanup thresholds
-- [ ] **DBHL-04**: Plugin reads table prefix dynamically from WP-CLI (never hardcoded)
-- [ ] **DBHL-05**: Plugin accesses DB exclusively through WP-CLI (never parses wp-config.php for credentials directly)
+- [x] **DBHL-01**: User can analyze wp_options autoload bloat (total size, top offenders, plugin attribution)
+- [x] **DBHL-02**: User can detect transient buildup and expired transient count
+- [x] **DBHL-03**: User can check post revision accumulation and recommend cleanup thresholds
+- [x] **DBHL-04**: Plugin reads table prefix dynamically from WP-CLI (never hardcoded)
+- [x] **DBHL-05**: Plugin accesses DB exclusively through WP-CLI (never parses wp-config.php for credentials directly)
 
 ### Infrastructure Audits
 
@@ -184,11 +184,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MSRC-05 | Phase 5 | Complete |
 | MSRC-06 | Phase 5 | Pending |
 | MSRC-07 | Phase 5 | Complete |
-| DBHL-01 | Phase 6 | Pending |
-| DBHL-02 | Phase 6 | Pending |
-| DBHL-03 | Phase 6 | Pending |
-| DBHL-04 | Phase 6 | Pending |
-| DBHL-05 | Phase 6 | Pending |
+| DBHL-01 | Phase 6 | Complete |
+| DBHL-02 | Phase 6 | Complete |
+| DBHL-03 | Phase 6 | Complete |
+| DBHL-04 | Phase 6 | Complete |
+| DBHL-05 | Phase 6 | Complete |
 | INFR-01 | Phase 6 | Complete |
 | INFR-02 | Phase 6 | Complete |
 | PERF-01 | Phase 7 | Pending |
