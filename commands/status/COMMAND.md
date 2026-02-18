@@ -68,10 +68,25 @@ jq -r '.sites | to_entries[] | @json' sites.json | while IFS= read -r site_json;
   NOTES=$(echo "$SITE_DATA" | jq -r '.notes // "None"')
   IS_DEFAULT=$(echo "$SITE_DATA" | jq -r '.is_default // false')
 
+  # New source-type fields (backward-compatible with null-safe defaults)
+  SOURCE_TYPE=$(echo "$SITE_DATA" | jq -r '.source_type // "ssh"')
+  CONTAINER_NAME=$(echo "$SITE_DATA" | jq -r '.container_name // empty')
+  GIT_REMOTE=$(echo "$SITE_DATA" | jq -r '.git_remote // empty')
+  GIT_BRANCH=$(echo "$SITE_DATA" | jq -r '.git_branch // empty')
+  FILE_ACCESS=$(echo "$SITE_DATA" | jq -r '.file_access // "rsync"')
+
+  # Determine source type badge
+  case "$SOURCE_TYPE" in
+    "local")  SOURCE_BADGE="[LOCAL]" ;;
+    "docker") SOURCE_BADGE="[DOCKER]" ;;
+    "git")    SOURCE_BADGE="[GIT]" ;;
+    *)        SOURCE_BADGE="[SSH]" ;;
+  esac
+
   # Show default marker
   DEFAULT_MARKER=""
   if [ "$IS_DEFAULT" = "true" ]; then
-    DEFAULT_MARKER=" [DEFAULT]"
+    DEFAULT_MARKER="  [DEFAULT]"
   fi
 
   # Calculate relative time for last_sync
@@ -94,11 +109,54 @@ jq -r '.sites | to_entries[] | @json' sites.json | while IFS= read -r site_json;
     RELATIVE_TIME="Never"
   fi
 
-  echo "### $SITE_NAME$DEFAULT_MARKER"
-  echo "- **Host:** $USER@$HOST"
+  # Print heading with source type badge and optional default marker
+  echo "### $SITE_NAME  $SOURCE_BADGE$DEFAULT_MARKER"
   echo "- **WordPress:** $WP_VERSION at $SITE_URL"
   echo "- **WP-CLI:** $WP_CLI_PATH"
-  echo "- **Last sync:** $LAST_SYNC ($RELATIVE_TIME)"
+
+  # Source-type-specific detail lines
+  case "$SOURCE_TYPE" in
+    "ssh")
+      echo "- **Source:** SSH ($USER@$HOST)"
+      echo "- **Last sync:** $LAST_SYNC ($RELATIVE_TIME)"
+      ;;
+    "local")
+      echo "- **Source:** local directory"
+      echo "- **Path:** $LOCAL_PATH"
+      echo "- **Files:** live access (no sync needed)"
+      ;;
+    "docker")
+      echo "- **Source:** docker container ($CONTAINER_NAME)"
+      echo "- **File access:** $FILE_ACCESS"
+      echo "- **Container WP path:** $WP_PATH"
+      if [ "$FILE_ACCESS" = "bind_mount" ]; then
+        echo "- **Files:** live access via bind mount"
+      else
+        echo "- **Last sync:** $LAST_SYNC ($RELATIVE_TIME) (docker cp)"
+      fi
+      ;;
+    "git")
+      echo "- **Source:** git repository"
+      echo "- **Remote:** $GIT_REMOTE ($GIT_BRANCH)"
+      echo "- **Clone:** $LOCAL_PATH"
+      echo "- **Files:** local clone ($LAST_SYNC)"
+      ;;
+  esac
+
+  # Capabilities line (WP-CLI-gated skills shown conditionally)
+  BASE_CAPS="code quality, malware scan, config security"
+  if [ "$WP_CLI_PATH" != "null" ] && [ -n "$WP_CLI_PATH" ] && [ "$SOURCE_TYPE" != "git" ]; then
+    echo "- **Capabilities:** $BASE_CAPS, database, user audit, version audit"
+  else
+    case "$SOURCE_TYPE" in
+      "git")    DB_REASON="git source — no live database" ;;
+      "local")  DB_REASON="WP-CLI not found — install from https://wp-cli.org to enable" ;;
+      "docker") DB_REASON="WP-CLI not found in container" ;;
+      *)        DB_REASON="WP-CLI not installed on server" ;;
+    esac
+    echo "- **Capabilities:** $BASE_CAPS (DB skills unavailable — $DB_REASON)"
+  fi
+
   echo "- **Local files:** $LOCAL_PATH"
   echo "- **Environment:** $ENVIRONMENT"
   echo "- **Notes:** $NOTES"
