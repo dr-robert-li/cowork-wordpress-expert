@@ -1,432 +1,351 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Claude CoWork Plugin for WordPress Remote Diagnostics
-**Researched:** 2026-02-16
-**Confidence:** HIGH
+**Domain:** WordPress Diagnostic Tool — v2.0 Feature Additions (DB Analysis, Performance Detection, Architecture Review, Findings Trends, Multi-Source Access)
+**Researched:** 2026-02-18
+**Confidence:** HIGH for DB/Docker/multi-source pitfalls (evidence from community issues and official docs); MEDIUM for static analysis and trends pitfalls (inferred from adjacent domain patterns and existing skill design)
+
+---
 
 ## Critical Pitfalls
 
-### Pitfall 1: SSH Credential Exposure in sites.json
+### Pitfall 1: wp-config.php Credential Parsing Fails on Non-Standard Formats
 
 **What goes wrong:**
-SSH credentials (passwords, private keys, hostnames, usernames) stored in `sites.json` get committed to version control, logged in Claude conversation history, or exposed in error messages. This immediately compromises all managed WordPress sites.
+Regex or grep-based parsing of `DB_PASSWORD`, `DB_HOST`, `DB_NAME` from `wp-config.php` breaks on sites that use environment variables (`getenv('DB_PASSWORD')`), multi-line define statements, single-quoted vs double-quoted values, or constants defined via custom config includes. The parse succeeds visually but silently returns an empty or wrong value, causing a DB connection error that looks like a credentials problem.
 
 **Why it happens:**
-- CoWork plugins use JSON config files for site data
-- Developers add `sites.json` before creating `.gitignore`
-- Claude's context window includes the entire file during analysis
-- Error messages may echo back credential values
-- Temporary command output can include sensitive data
+Developers assume all WordPress installs follow the canonical `define('DB_PASSWORD', 'somepassword');` format. In practice, managed hosts (Kinsta, WP Engine), Local by Flywheel, and Docker-based installs substitute environment variables: `define('DB_PASSWORD', getenv_docker('WORDPRESS_DB_PASSWORD', ''))`. A naive grep for the string literal returns nothing.
 
 **How to avoid:**
-1. **Never store credentials directly in sites.json**
-   - Store SSH config references only (`Host alias` from `~/.ssh/config`)
-   - Use SSH key-based authentication exclusively
-   - Reference keys by path, not inline content
-
-2. **Immediate .gitignore setup**
-   - Add `sites.json` to `.gitignore` in Phase 1
-   - Pattern: `sites.json`, `*.local.json`, `credentials.json`
-   - Verify with `git status --ignored`
-
-3. **Credential indirection**
-   - Store connection aliases: `{"site": "production", "ssh_host": "prod-wp"}`
-   - Real credentials live in `~/.ssh/config` which is never synced
-   - Use SSH agent for key management, not file paths
-
-4. **Command output sanitization**
-   - Never `cat sites.json` in Claude commands
-   - Redirect rsync/ssh output carefully: `2>&1 | grep -v 'password'`
-   - Use `--quiet` flags where possible
+1. Never use regex to parse wp-config.php. Parse it through PHP itself:
+   ```bash
+   php -r "define('ABSPATH', '.'); include 'wp-config.php'; echo DB_HOST . ':' . DB_NAME . ':' . DB_USER;"
+   ```
+2. Or use WP-CLI which reads wp-config.php correctly in all formats:
+   ```bash
+   wp config get DB_HOST
+   wp config get DB_NAME
+   wp config get DB_USER
+   # DB_PASSWORD: do NOT extract — use WP-CLI's built-in DB connection instead
+   ```
+3. Handle `getenv()` / `getenv_docker()` patterns — these are environment-injected values. If DB credentials come from the environment, they are not readable from the file; use WP-CLI's DB access instead.
+4. Detect non-standard formats and bail gracefully with "DB credentials are environment-injected; using WP-CLI for DB access."
 
 **Warning signs:**
-- `sites.json` appears in `git status` unignored
-- Claude responses contain connection strings
-- Command outputs show hostnames/usernames
-- Error messages include authentication details
+- Grep for `DB_PASSWORD` returns empty on a Docker-based site
+- `php -r "include 'wp-config.php';"` throws errors about undefined constants
+- DB connection fails despite apparent credential extraction
+- `wp-config.php` contains `getenv_docker` or `$_SERVER['DB_']` patterns
 
 **Phase to address:**
-Phase 1 (Foundation) - Establish security patterns before any site connections
-
-**Sources:**
-- [SSH Config: The Complete Guide for 2026](https://devtoolbox.dedyn.io/blog/ssh-config-complete-guide)
-- [Best practices for protecting SSH credentials | Google Cloud](https://cloud.google.com/compute/docs/connect/ssh-best-practices/credentials)
-- [How Should Credentials Be Stored in JSON?](https://sourcebae.com/blog/how-should-credentials-be-stored-in-json/)
+Phase: DB Analysis — Implement before any direct DB connection attempt
 
 ---
 
-### Pitfall 2: rsync --delete Flag Disasters
+### Pitfall 2: DB Credential Exposure in Claude Context Window
 
 **What goes wrong:**
-Using `rsync --delete` when syncing from remote to local can wipe out the local analysis directory if the remote path is wrong, the SSH connection drops mid-sync, or the remote filesystem isn't mounted properly. All diagnostic work is lost.
+When reading `wp-config.php` to extract DB credentials for local connection, the full file content (including DB_PASSWORD) appears in Claude's context window and potentially in conversation output, debug logs, or tool call traces. This defeats the entire security model of the plugin.
 
 **Why it happens:**
-- `--delete` removes files in destination not present in source
-- WordPress diagnostic tools commonly use "pull" (remote → local) workflows
-- Remote path typos create empty source directories
-- SSH timeouts can interrupt mid-transfer
-- Developers copy rsync commands without understanding flags
+The natural implementation is `cat wp-config.php` or `Read file: wp-config.php` to find the DB credentials. But this surfaces the password in AI context and potentially in the visible conversation. On local sites where wp-config.php sits in the synced `.sites/` directory, it is trivially readable.
 
 **How to avoid:**
-1. **Always use --dry-run first**
+1. **Never read wp-config.php directly** to show credentials. Only read it through WP-CLI config commands that return individual values.
+2. **Never display DB_PASSWORD in output.** Extract only what is needed (host, name, user) for diagnostic output. The password is never shown.
+3. **Use WP-CLI for all DB operations** (local sites via `--path=`, remote sites via SSH). WP-CLI handles authentication internally without exposing the password.
+4. **For direct MySQL connection** (needed when WP-CLI is unavailable): pass credentials via environment variable or MySQL option file, never via command-line argument where they appear in process lists:
    ```bash
-   # Preview before executing
-   rsync -avz --dry-run --exclude='.git*' user@host:/path/to/wp/ ./local/
-   # Check output, then remove --dry-run
+   # BAD: password visible in process list
+   mysql -u root -pmypassword dbname
+
+   # GOOD: password via env var
+   MYSQL_PWD="$(wp config get DB_PASSWORD --path=...)" mysql -u "$user" "$dbname" -e "SELECT ..."
    ```
-
-2. **Avoid --delete in diagnostic tools**
-   - For read-only analysis, deletion is rarely needed
-   - If required, add explicit confirmation step
-   - Use `--delete-after` (safer) not `--delete-before`
-
-3. **Explicit exclusions**
-   - Always exclude: `.git*`, `node_modules/`, `vendor/`, `.env`
-   - WordPress-specific: `wp-content/cache/`, `wp-content/uploads/` (large)
-   - Pattern: `--exclude={.git*,node_modules,vendor,.env,*.log}`
-
-4. **Direction matters**
-   - Push (local → remote): safer with `--delete` (remote is target)
-   - Pull (remote → local): dangerous with `--delete` (local is target)
-   - For diagnostics, pull WITHOUT `--delete`
-
-5. **Trailing slash awareness**
-   ```bash
-   # WRONG: copies content INTO local/wp-content
-   rsync source/wp-content/ local/
-
-   # RIGHT: copies wp-content AS local/wp-content
-   rsync source/wp-content local/
-   ```
+5. Add `wp-config.php` to the `.sites/` sync exclusions so it is never copied locally. Access via WP-CLI remote over SSH instead.
 
 **Warning signs:**
-- rsync commands lack `--dry-run` in documentation
-- No exclusion patterns specified
-- `--delete` used in pull operations
-- Missing trailing slash handling
+- Claude responses contain database password strings
+- `wp-config.php` present in `.sites/{site}/` local directory
+- `cat` or direct file reads used to retrieve DB config
+- MySQL commands with `-p` password argument in bash history
 
 **Phase to address:**
-Phase 1 (Foundation) - Document safe rsync patterns before site connections
-
-**Sources:**
-- [Everyday rsync - VKC.sh](https://vkc.sh/everyday-rsync/)
-- [How to Exclude Files and Directories with Rsync](https://linuxize.com/post/how-to-exclude-files-and-directories-with-rsync/)
-- [Favorite rsync Commands for Copying WordPress Sites](https://guides.wp-bullet.com/favorite-rsync-commands-for-copying-wordpress-sites/)
+Phase: DB Analysis — Security constraint must be established before any credential handling
 
 ---
 
-### Pitfall 3: WP-CLI Path Assumptions Across Hosts
+### Pitfall 3: Docker Container Discovery is Unreliable Without a Convention
 
 **What goes wrong:**
-Commands fail on different hosting providers because WP-CLI is installed at different paths (`wp`, `/usr/local/bin/wp`, `~/bin/wp-cli.phar`) or different versions (2.x vs 3.x) with incompatible syntax. Managed hosts may not have WP-CLI at all.
+When adding Docker container support, the tool attempts to discover WordPress containers by listing running containers and guessing which one is WordPress. This fails when: multiple WordPress containers are running (multi-site development), containers are named non-obviously (e.g., `app_1`), the WordPress container is stopped, or docker-compose project naming varies. The result is that the tool either picks the wrong container or fails entirely.
 
 **Why it happens:**
-- Each host installs WP-CLI differently (package manager, manual download, or not at all)
-- Shell `$PATH` varies by hosting provider
-- `~/.bash_profile` not loaded in SSH command mode
-- WP Engine, Kinsta, Flywheel have custom WP-CLI installations
-- Some hosts block WP-CLI for security
+There is no standard naming convention for WordPress Docker containers. Common setups range from `wordpress` (Docker Hub default image name) to `app`, `web`, `php`, or arbitrary names in docker-compose. Detection by image name (`wordpress`) only works for the official image — custom PHP images used with WordPress (a very common pattern) won't match.
 
 **How to avoid:**
-1. **Probe for WP-CLI availability**
+1. **Ask, don't guess.** When connecting to a Docker-based site, ask the user: "What is your container name or ID? (run `docker ps` to see running containers)"
+2. **Provide a discovery helper** but make the output a selection list, not an auto-pick:
    ```bash
-   # Test multiple common paths
-   ssh user@host 'which wp || which wp-cli || ls ~/bin/wp-cli.phar'
+   docker ps --format "{{.Names}}\t{{.Image}}\t{{.Status}}" | grep -v "mysql\|redis\|memcache"
    ```
-
-2. **Store per-site WP-CLI path**
-   ```json
-   {
-     "site": "production",
-     "ssh_host": "prod-wp",
-     "wp_cli_path": "/usr/local/bin/wp",
-     "wp_cli_version": "2.10.0"
-   }
-   ```
-
-3. **Fallback chain**
-   - Try `wp` (in PATH)
-   - Try `/usr/local/bin/wp`
-   - Try `~/wp-cli.phar`
-   - Fall back to direct MySQL queries if no WP-CLI
-   - Document which hosts lack WP-CLI
-
-4. **Version compatibility checks**
+3. **Detect wp-config.php to confirm** before accepting a container:
    ```bash
-   # Check version before running commands
-   ssh user@host 'wp --version'
-   # Some WP-CLI 2.x commands don't exist in 3.x
+   docker exec {container} test -f /var/www/html/wp-config.php && echo "WordPress found"
    ```
-
-5. **SSH environment handling**
-   - Use `ssh -t` for pseudo-TTY (loads profile)
-   - Or explicitly: `ssh user@host 'source ~/.bash_profile && wp ...'`
-   - Or use absolute paths: `ssh user@host '/usr/local/bin/wp ...'`
+4. **Store the confirmed container name in the site profile** (`connection_type: docker, container: my_wp_container`). Don't re-discover on every run.
 
 **Warning signs:**
-- Hardcoded `wp` commands without path verification
-- No version checks before running commands
-- Error: "wp: command not found" on some hosts
-- Different behavior across different sites
+- Tool auto-selects container named `wordpress` but actual site is in `app`
+- No wp-config.php found in auto-discovered container path
+- Multiple containers match Docker Hub `wordpress` image
+- User gets "wrong site" results on Docker multi-site setups
 
 **Phase to address:**
-Phase 2 (Site Detection) - Probe host capabilities before running diagnostics
-
-**Sources:**
-- [Running Commands Remotely - WP-CLI](https://make.wordpress.org/cli/handbook/guides/running-commands-remotely/)
-- [SSH: Allow to specify path of remote wp-cli](https://github.com/wp-cli/wp-cli/issues/5245)
-- [Streamline WordPress Deployment Using WP-CLI and SSH - 2026](https://www.wewp.io/wp-cli-ssh-wordpress-deployments-2026/)
+Phase: Multi-Source Access — Discovery strategy must be defined before implementation
 
 ---
 
-### Pitfall 4: Claude Context Window Exhaustion on Large Sites
+### Pitfall 4: Docker File Permissions Block Read Access to wp-config.php
 
 **What goes wrong:**
-Syncing an entire WordPress site (10GB+ with uploads/cache) overwhelms Claude's context window when analyzing files. The plugin becomes unusable, responses timeout, or critical diagnostic details get "lost in the middle" of the context.
+`docker exec {container} cat /var/www/html/wp-config.php` returns "Permission denied" because the file is owned by `www-data` (UID 33 in the container) and the host user running the Docker exec command has a different UID. This is a known Docker+WordPress issue — wp-content is often owned by root on initial creation, and wp-config.php is typically 640 or 600.
 
 **Why it happens:**
-- WordPress sites with uploads can be 10GB-100GB
-- Claude Opus 4.6 has 1M token context (~500 pages of text)
-- A large codebase can be 200K tokens alone
-- Syncing everything wastes context on irrelevant files
-- The "lost in the middle" problem: important details overlooked in large contexts
+Docker containers run processes as internal users (www-data, apache) that don't map to the host user's UID. When reading files via `docker exec`, the exec process runs as the invoking user (host UID) by default on some systems, causing permission mismatches. The Official WordPress Docker image uses UID 33 (www-data) for file ownership.
 
 **How to avoid:**
-1. **Selective sync, not full site**
+1. **Use `docker exec -u root`** for diagnostic file reads (read-only access to wp-config.php is safe as root within a diagnostic context):
    ```bash
-   # WRONG: sync everything
-   rsync -avz user@host:/var/www/wordpress/ ./site/
-
-   # RIGHT: sync only what's needed for diagnostics
-   rsync -avz \
-     --exclude='wp-content/uploads/' \
-     --exclude='wp-content/cache/' \
-     --exclude='*.log' \
-     --exclude='*.sql' \
-     user@host:/var/www/wordpress/{wp-config.php,wp-content/{plugins,themes,mu-plugins}} \
-     ./site/
+   docker exec -u root {container} cat /var/www/html/wp-config.php
    ```
-
-2. **Diagnostic-focused exclusions**
-   - Exclude: uploads, cache, backups, logs (10GB+ commonly)
-   - Include: core files, plugins, themes, wp-config.php
-   - For upload issues: sync only one sample file
-
-3. **Incremental analysis**
-   - Don't read all files at once
-   - Analyze by category: "Check plugin versions" → "Check theme errors" → "Check config"
-   - Use grep/search tools instead of reading entire files
-
-4. **Size checks before sync**
+2. **Or use WP-CLI inside the container** if wp-cli is installed:
    ```bash
-   # Check remote directory size first
-   ssh user@host 'du -sh /var/www/wordpress/wp-content/uploads'
-   # If > 1GB, don't sync uploads
+   docker exec {container} wp config get DB_HOST --path=/var/www/html
    ```
-
-5. **Premium context awareness**
-   - Requests > 200K tokens cost 2x input, 1.5x output
-   - Prefer multiple small syncs over one massive sync
-   - Monitor Claude Code response lag as warning sign
+3. **Or use docker cp** to extract the file to a temp location for reading:
+   ```bash
+   docker cp {container}:/var/www/html/wp-config.php /tmp/wp-config-{site}.php
+   # read, then immediately delete
+   ```
+4. **Never set wp-config.php to 777** as a workaround — this is a real security risk documented in Docker WordPress community issues.
+5. **Document the UID mismatch pattern** in the connection skill: if permission denied, try `-u root` before failing.
 
 **Warning signs:**
-- rsync transfers take > 5 minutes
-- Local site directory > 1GB
-- Claude responses slow down significantly
-- "Lost context" errors or incomplete analysis
-- Commands timing out
+- "Permission denied" when using `docker exec` to read wp-config.php
+- `docker exec` works for some files but not others
+- wp-content directory owned by root after container recreation
+- User reports "it works if I run it with sudo"
 
 **Phase to address:**
-Phase 2 (Site Detection) - Establish size limits and exclusion patterns
-
-**Sources:**
-- [Claude Opus 4.6: 1 Million Token Context Window Guide](https://www.nxcode.io/resources/news/claude-1m-token-context-codebase-analysis-guide-2026)
-- [A practical guide to the Claude code context window size](https://www.eesel.ai/blog/claude-code-context-window-size)
-- [How Claude Code Got Better by Protecting More Context](https://hyperdev.matsuoka.com/p/how-claude-code-got-better-by-protecting)
+Phase: Multi-Source Access — Must be handled in Docker connection implementation
 
 ---
 
-### Pitfall 5: Cross-Platform rsync Incompatibility (macOS vs Linux)
+### Pitfall 5: Git Repository Clone Authentication Fails Silently in Non-Interactive Shell
 
 **What goes wrong:**
-rsync commands that work on Linux fail on macOS Sequoia (2025+) because Apple replaced GNU rsync 2.6.9 with openrsync, which accepts only a subset of rsync flags. Automated workflows break when developers switch machines.
+When cloning a private git repository to analyze WordPress code, `git clone` hangs indefinitely waiting for a username/password prompt that never comes (because the shell is non-interactive), or fails with "Authentication failed" without actionable guidance. For SSH-based git remotes, the SSH key used for git must be a different key than the SSH key used for the WordPress host — and the git remote host (github.com, gitlab.com) may not be in `known_hosts`, causing a host key verification prompt that also blocks silently.
 
 **Why it happens:**
-- macOS Sequoia (2025) replaced rsync with openrsync (BSD license)
-- openrsync only supports protocol 29 vs rsync 3.x protocol 31
-- Many rsync flags don't exist in openrsync
-- Character encoding differs between macOS and Linux filesystems
-- macOS metadata (extended attributes) not compatible with Linux rsync
+- HTTPS git clone falls back to interactive auth when no credentials are cached — in non-interactive Bash execution this blocks forever
+- SSH git clone requires the git host key to be in `~/.ssh/known_hosts` — if it isn't, SSH prompts interactively which blocks the tool
+- Personal Access Tokens (PATs) embedded in HTTPS clone URLs (`https://token@github.com/...`) appear in `git log --all`, Claude context, and process lists
+- Many organizations disable PAT-based HTTPS auth in 2025-2026, requiring SSH
 
 **How to avoid:**
-1. **Test on both platforms**
-   - Document which OS was tested
-   - Flag commands as "Linux only" or "macOS compatible"
-   - Provide platform-specific variations
-
-2. **Use compatible flag subset**
+1. **Prefer SSH for git remote access.** Confirm with user: "Is your repo SSH or HTTPS?" and guide accordingly.
+2. **Pre-check known_hosts** before cloning:
    ```bash
-   # Compatible with both rsync and openrsync
-   rsync -avz --exclude='.git*' source/ dest/
-
-   # macOS-specific issues require:
-   --iconv=UTF-8-MAC,UTF-8  # character encoding
-   --fake-super              # metadata compatibility
+   ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+   # or for GitLab:
+   ssh-keyscan gitlab.com >> ~/.ssh/known_hosts 2>/dev/null
    ```
-
-3. **Version detection**
+3. **For HTTPS with token**: use git credential store, not URL-embedded tokens:
    ```bash
-   # Check which rsync is installed
-   rsync --version | head -1
-   # openrsync: version 2.6.9, protocol 29
-   # rsync: version 3.x, protocol 31
-   ```
+   # BAD: token in URL (appears in logs, ps output)
+   git clone https://mytoken@github.com/org/repo.git
 
-4. **Homebrew fallback for macOS**
+   # GOOD: use credential helper
+   git -c credential.helper='store' clone https://github.com/org/repo.git
+   # or: GIT_ASKPASS=/path/to/script git clone ...
+   ```
+4. **Set GIT_TERMINAL_PROMPT=0** to fail fast instead of hang:
    ```bash
-   # Install GNU rsync on macOS if advanced features needed
-   brew install rsync
-   # Use explicit path: /opt/homebrew/bin/rsync
+   GIT_TERMINAL_PROMPT=0 git clone {repo_url} 2>&1
    ```
-
-5. **Document platform requirements**
-   - README: "Tested on macOS Sequoia with openrsync"
-   - Or: "Requires GNU rsync 3.x (use Homebrew on macOS)"
-   - List incompatible flags if using openrsync
+5. **For shallow diagnostic clone** (code analysis only, not history), use `--depth=1` to minimize data transfer:
+   ```bash
+   git clone --depth=1 {repo_url} /tmp/wp-repo-{site}/
+   ```
 
 **Warning signs:**
-- rsync commands work on Linux but fail on macOS
-- "unknown option" errors on macOS
-- File names with accented characters corrupted
-- Extended attributes lost during transfer
+- `git clone` command never returns (hanging on auth prompt)
+- Git token appears in command output or process list (`ps aux | grep git`)
+- "Host key verification failed" for github.com/gitlab.com
+- Clone succeeds but tool has the wrong branch (not `main`/`master` but a feature branch)
 
 **Phase to address:**
-Phase 1 (Foundation) - Detect platform and document compatibility
-
-**Sources:**
-- [rsync replaced with openrsync on macOS Sequoia](https://derflounder.wordpress.com/2025/04/06/rsync-replaced-with-openrsync-on-macos-sequoia/)
-- [Rsync between Mac and Linux - Something Odd!](https://odd.blog/2020/10/06/rsync-between-mac-and-linux/)
-- [What you should know about Apple's switch from rsync to openrsync](https://appleinsider.com/inside/macos-sequoia/tips/what-you-should-know-about-apples-switch-from-rsync-to-openrsync)
+Phase: Multi-Source Access — Git clone flow must handle auth upfront
 
 ---
 
-### Pitfall 6: WordPress File Permissions Corrupted by rsync
+### Pitfall 6: Static Code Analysis Reports N+1 Query False Positives Everywhere
 
 **What goes wrong:**
-After rsync, WordPress can't write uploads, update plugins, or create cache files because rsync transferred incorrect permissions (775/777 directories became 755, or 644 files became 600). The site appears broken but code is intact.
+Grep-based N+1 query detection flags every `get_post_meta()` call inside any loop as an N+1 pattern, including cases where the loop is over a small, bounded set (e.g., iterating 3 sidebar widgets) or where the result is already cached by WordPress's object cache. This creates noise that undermines the diagnostic's credibility — users start ignoring all findings because there are too many false positives.
 
 **Why it happens:**
-- rsync preserves source permissions by default (`-a` flag includes `-p`)
-- WordPress expects directories: 755, files: 644, wp-config.php: 600/640
-- Local user UID/GID differs from remote server UID/GID
-- Rsync from macOS to Linux (or vice versa) doesn't map users correctly
-- Some hosts use non-standard permissions (shared hosting oddities)
+Static analysis cannot determine loop cardinality or cache state. A grep for "function call inside foreach loop" will match `foreach ($widget_areas as $area) { get_option($area) }` (cached, harmless) and `foreach ($product_ids as $id) { get_post_meta($id, 'price', true) }` (real N+1 problem) identically. The existing `performance/SKILL.md` already identifies this analysis domain but the implementation risk is in naive detection.
 
 **How to avoid:**
-1. **Use --chmod to normalize permissions**
-   ```bash
-   # Automatically set correct WordPress permissions
-   rsync -avz \
-     --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
-     user@host:/var/www/wordpress/ ./site/
-
-   # D = directories: 755 (rwxr-xr-x)
-   # F = files: 644 (rw-r--r--)
-   ```
-
-2. **Special handling for wp-config.php**
-   ```bash
-   # After sync, tighten wp-config.php
-   chmod 600 ./site/wp-config.php
-   ```
-
-3. **Read-only analysis doesn't need write permissions**
-   - For diagnostics, files can be read-only locally
-   - Only matters if testing patch application locally
-
-4. **Document permission expectations**
-   - Warn users synced files may have wrong permissions
-   - Provide fix command: `find ./site -type d -exec chmod 755 {} \;`
-
-5. **--no-perms flag for diagnostic mode**
-   ```bash
-   # Don't preserve permissions (use local defaults)
-   rsync -avz --no-perms user@host:/path/ ./local/
-   ```
+1. **Flag as "potential" not "confirmed."** Never say "this IS an N+1 query" from static analysis alone. Always qualify: "potential N+1 pattern — verify with Query Monitor at runtime."
+2. **Prioritize by context:** Flag query calls inside `WP_Query` post loops (high cardinality, real risk) differently from loops over static configuration arrays (low risk).
+3. **Check for existing cache patterns:** If `wp_cache_get` / `get_transient` appears in the same function, note that the developer is aware of caching — severity drops.
+4. **Whitelist known-safe patterns:**
+   - `get_option()` calls in loops: WordPress auto-caches options in memory, so this is NOT an N+1 issue
+   - `wp_get_attachment_image()` in loops: internally batches in recent WP versions
+5. **Use a two-tier output:** List high-confidence N+1 patterns (DB queries inside `have_posts()` loops without caching) separately from low-confidence patterns (any loop with any function call).
+6. **Point to Query Monitor** as the verification step — static analysis identifies candidates, runtime profiling confirms.
 
 **Warning signs:**
-- Local WordPress install can't write after sync
-- Permission denied errors in local testing
-- wp-config.php has 644 permissions (too permissive)
-- Upload directory has 644 (should be 755)
+- N+1 detection flags > 20 instances in a codebase — almost certainly over-reporting
+- Same pattern flagged as N+1 and as "uses caching correctly" in the same file
+- User feedback: "these results are useless, every line is flagged"
+- `get_option()` calls flagged as N+1 (a known WordPress caching false positive)
 
 **Phase to address:**
-Phase 2 (Site Detection) - Document safe rsync permission handling
-
-**Sources:**
-- [WordPress File Permissions Explained (755 vs 644 vs 600)](https://wpthrill.com/wordpress-file-permissions-755-vs-644-vs-600/)
-- [How to Set Correct WordPress File Permissions](https://jetpack.com/resources/wordpress-file-permissions/)
-- [Folders and file permissions after pushing wordpress](https://github.com/welaika/wordmove/issues/354)
+Phase: Performance Detection skill — Define confidence tiers and whitelist patterns before implementation
 
 ---
 
-### Pitfall 7: Symlinked Plugins/Themes Break Detection
+### Pitfall 7: DB Query Analysis Mistakes the Table Prefix
 
 **What goes wrong:**
-WordPress sites using symlinks for shared plugins/themes across multiple installs cause diagnostic tools to report incorrect paths, fail to update plugins, or miss critical files during rsync. `plugin_basename(__FILE__)` returns wrong values.
+SQL queries hardcoded with `wp_options`, `wp_posts`, `wp_postmeta` fail silently or return zero results on sites with a non-standard table prefix (e.g., `mysite_options`). This is particularly common on shared hosting where users changed the prefix for security, and on multisite installs where blog-specific tables use `wp_2_options`, `wp_2_posts`, etc.
 
 **Why it happens:**
-- Developers use symlinks for multi-site management
-- `wp-content/plugins/my-plugin` → `/shared/plugins/my-plugin`
-- WP-CLI and WordPress core have inconsistent symlink handling
-- rsync follows symlinks differently depending on flags
-- Plugin updates may delete symlink targets, not just links
+The WordPress default prefix is `wp_` but the installer asks users to change it. Many security guides recommend a non-standard prefix. The `performance/SKILL.md` already shows hardcoded `wp_options` in example queries — this pattern will break on non-default prefixes. The autoload analysis query `SELECT option_name, LENGTH(option_value) FROM wp_options WHERE autoload='yes'` returns nothing on a `mysite_` prefix site.
 
 **How to avoid:**
-1. **rsync symlink handling**
+1. **Always read the prefix from wp-config.php before running any DB query:**
    ```bash
-   # Follow symlinks and copy actual files (default)
-   rsync -avzL user@host:/var/www/ ./site/
+   # Via WP-CLI (preferred):
+   TABLE_PREFIX=$(wp config get table_prefix --path={wp_path})
 
-   # Preserve symlinks as links (requires both sides support)
-   rsync -avz --links user@host:/var/www/ ./site/
-
-   # Copy symlink target if remote, preserve if local
-   rsync -avz --copy-unsafe-links user@host:/var/www/ ./site/
+   # Then use in queries:
+   wp db query "SELECT option_name, LENGTH(option_value) as size FROM ${TABLE_PREFIX}options WHERE autoload='yes' ORDER BY size DESC LIMIT 20;"
    ```
-
-2. **Detect symlinks before analysis**
+2. **Or use WP-CLI's built-in commands** which automatically use the correct prefix:
    ```bash
-   # Check for symlinked plugins/themes
-   ssh user@host 'find /var/www/wordpress/wp-content/{plugins,themes} -type l'
+   wp db query "$(wp eval 'global $wpdb; echo "SELECT * FROM {$wpdb->options} WHERE autoload='\''yes'\'' LIMIT 20;";')"
    ```
-
-3. **Document symlink behavior**
-   - Warn: "Symlinked plugins may show unexpected paths"
-   - Ask: "Are you using symlinks for shared plugins/themes?"
-   - Provide: "Use -L flag to resolve symlinks" option
-
-4. **WP-CLI symlink awareness**
-   - `wp plugin list` may show incorrect paths with symlinks
-   - Verify with `wp plugin path <plugin>` for actual location
-
-5. **Symlinks in production = rare**
-   - Common in development, rare in production
-   - If detected, flag as "advanced configuration"
+3. **For multisite:** each blog has its own prefixed tables. Detect multisite from `MULTISITE` constant and handle accordingly.
+4. **Store detected table prefix in site profile** so it doesn't need to be re-read on every diagnostic run.
 
 **Warning signs:**
-- Plugin paths start with `/shared/` or `../../`
-- `rsync` shows "broken symlink" warnings
-- WP-CLI plugin commands fail unexpectedly
-- Update warnings: "Could not remove the old plugin"
+- DB queries return 0 rows on a site where the DB clearly has data
+- `wp config get table_prefix` returns something other than `wp_`
+- Autoload analysis shows 0KB when site health check shows 5MB+
+- Queries work on one site but not another (prefix varies)
 
 **Phase to address:**
-Phase 3 (Plugin Analysis) - Detect symlinks and adjust behavior
+Phase: DB Analysis — Table prefix detection must be the first DB setup step
 
-**Sources:**
-- [Managing WordPress Development With Symlinks - Kinsta](https://kinsta.com/blog/managing-wordpress-development-with-symlinks/)
-- [WordPress should not try to remove themes or plugins recursively if the directory is a symlink](https://core.trac.wordpress.org/ticket/15134)
-- [Ultimate Guide 2025: WordPress Development with Symlinks](https://zalvis.com/blog/wordpress-development-with-symlinks.html)
+---
+
+### Pitfall 8: Findings Trends Break When Finding IDs Change Between Runs
+
+**What goes wrong:**
+The findings trend system compares findings across diagnostic runs to show "improving" or "degrading" posture. But finding IDs are generated from file paths and line numbers (e.g., `CODE-SQLI-a3f` based on `functions.php:142`). When the codebase changes between runs (developer refactors, plugin updates, line numbers shift), every finding gets a new ID. The trend system reports "10 new critical findings" when in reality the same underlying issues moved 5 lines down in the file.
+
+**Why it happens:**
+The existing `diagnostic-code-quality/SKILL.md` uses `{file-path}:{line-number}` as the hash input for finding IDs. Line numbers are unstable across code changes. A refactor that adds a blank line at the top of functions.php would invalidate every single finding ID in that file.
+
+**How to avoid:**
+1. **Hash on content, not line number.** Generate finding IDs from the finding type + the actual code snippet (first 80 chars), not the line number:
+   ```
+   ID = MD5(finding_type + file_path + code_snippet_trimmed)[0:6]
+   ```
+   This makes IDs stable across line number changes but breaks when code actually changes — which is the correct behavior.
+2. **Store findings with both stable (content-based) and positional (line-based) IDs.** Use stable ID for trend comparison; include line number for navigation only.
+3. **Trend comparison strategy:** Do NOT require exact ID match for trend tracking. Use fuzzy matching:
+   - Same file + same finding type + same code snippet → same issue (trend continues)
+   - Same file + same finding type + different code → possible fix (mark as "resolved candidate")
+   - Net new file+type combination → new finding
+4. **Track "resolved" separately from "not found."** A finding disappearing from results could mean it was fixed OR that the scan didn't run that file. Only mark as resolved if the same file was scanned in both runs.
+5. **Version the findings JSON schema** from day one. Include a `schema_version` field in every findings file so future schema changes can be detected and migration handled.
+
+**Warning signs:**
+- Trend report shows "all findings new" every run despite no code changes
+- "Resolved" count spikes after developer runs code formatter (line numbers shift)
+- Trend comparison breaks after WordPress core update (plugin files move)
+- Findings JSON from run N cannot be parsed by trend code written for run N+1
+
+**Phase to address:**
+Phase: Findings Trends — ID stability strategy must be decided before any trend data is written
+
+---
+
+### Pitfall 9: Local Directory Detection Fails for Non-Standard WP Installs (Bedrock, Roots)
+
+**What goes wrong:**
+When connecting to a local WordPress directory, the tool looks for `wp-config.php` at the directory root to confirm it's a WordPress install. Bedrock (Roots.io) installs place `wp-config.php` one level up from the webroot, WordPress itself in `web/wp/`, and `wp-content` at `web/app/`. The detection heuristic finds nothing and reports "not a WordPress install."
+
+**Why it happens:**
+Bedrock is the most common alternative WordPress project structure in 2025-2026, used heavily by agencies. Standard WordPress detection checks for `wp-config.php` + `wp-content/` + `wp-includes/` at the same level. Bedrock separates these deliberately. Many Local by Flywheel sites also use Bedrock as the underlying structure.
+
+**How to avoid:**
+1. **Multi-level wp-config.php search:** Check the given path AND one level up:
+   ```bash
+   # Standard: {path}/wp-config.php
+   # Bedrock: {path}/../wp-config.php (or {path}/wp-config.php exists but WP is at {path}/web/wp/)
+   ```
+2. **Detect Bedrock explicitly:** Check for `composer.json` with `roots/wordpress` in the given directory:
+   ```bash
+   grep -q "roots/wordpress" composer.json && echo "Bedrock install detected"
+   ```
+3. **Fall back to WP-CLI path discovery:** Let WP-CLI search for the WordPress install rather than relying on file structure detection:
+   ```bash
+   wp --path={given_path} core version 2>/dev/null || wp --path={given_path}/web/wp core version 2>/dev/null
+   ```
+4. **Ask the user if detection fails:** "Could not find WordPress in {path}. Is this a Bedrock/custom structure? Please provide the path to wp-config.php."
+
+**Warning signs:**
+- Local connection fails with "not a WordPress install" on Bedrock/Roots projects
+- `wp-config.php` exists but `wp-includes/` is not at the same level
+- `composer.json` present with WordPress-related packages
+- The given path contains `web/` or `public/` subdirectory structure
+
+**Phase to address:**
+Phase: Multi-Source Access — Local directory connection must handle Bedrock before release
+
+---
+
+### Pitfall 10: Architecture Review Over-Flags CPT Misuse Without Understanding Intent
+
+**What goes wrong:**
+The architecture review skill flags "Custom Post Type misuse: storing structured data as CPTs" whenever it detects a CPT with many custom fields, treating it as anti-pattern. But the line between legitimate CPT use and "should be a custom table" is context-dependent — a CPT with 10 custom fields for a portfolio is reasonable; the same structure for 100,000 transaction records is not. Without scale context, the tool creates false alarms for well-architected small sites.
+
+**Why it happens:**
+Architecture review via static analysis cannot know row counts, expected data volume, or access patterns. The skill reads code structure but cannot run `SHOW TABLE STATUS` or count post_meta rows. Treating CPT + many custom fields as universally "wrong" is incorrect — the WordPress ecosystem broadly uses this pattern for moderate-scale data.
+
+**How to avoid:**
+1. **Combine static analysis with DB metrics.** Architecture concerns about CPT misuse only become actionable when combined with actual row counts:
+   - CPT with > 10 custom fields AND > 10,000 posts → flag as potential custom table candidate
+   - CPT with > 10 custom fields AND < 1,000 posts → Info-level note only
+2. **Gate DB queries behind "DB analysis available" flag.** Only run row count checks when DB access is confirmed. Fall back to static-only analysis with explicit confidence warning when DB is unavailable.
+3. **Qualify all architecture findings:** "This pattern becomes a performance concern at scale (>10K posts). Current data volume assessment requires DB access."
+4. **Distinguish CPT types:** WordPress core uses CPTs for menus (`nav_menu_item`), attachments, revisions — these are not misuse. Focus on *developer-defined* CPTs only.
+
+**Warning signs:**
+- Architecture review flags all sites with WooCommerce (which uses CPTs heavily and correctly)
+- Finding says "CPT misuse" but site has < 500 total posts
+- Attachment CPT or revision CPT flagged as misuse
+- All custom fields (ACF/Meta Box) treated as potential DB bloat
+
+**Phase to address:**
+Phase: Architecture Review — Define CPT misuse thresholds with DB-context gating before writing the skill
 
 ---
 
@@ -436,14 +355,16 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Storing credentials in sites.json | Faster setup, no SSH config needed | Security breach if committed/leaked | Never - always use SSH config indirection |
-| Skipping --dry-run for rsync | Saves one command | Data loss from typos | Never on first run, only after verification |
-| Hardcoding "wp" command path | Works on most hosts | Fails on 20%+ of hosts with custom paths | Only for personal sites, not multi-host tool |
-| Syncing entire WordPress site | Complete analysis capability | Context window exhaustion, slow transfers | Only for tiny sites (<100MB) |
-| Ignoring platform differences | Faster development on single OS | Commands fail on other platforms | Personal use only, document limitation |
-| Using root SSH access | Bypasses permission issues | Massive security risk, violates best practices | Never - use proper user permissions |
-| Storing wp-config.php in git | Easy to reference database creds | Credentials exposed in repo history | Never - use .gitignore from day 1 |
-| No WP-CLI version detection | Assumes latest version available | Commands fail on older/newer hosts | Only if controlling all target hosts |
+| Hardcoding `wp_` table prefix in SQL queries | Works on default installs | Fails silently on 30%+ of production sites with custom prefix | Never — always read prefix |
+| Reading full wp-config.php to extract credentials | Simple one-step implementation | Exposes DB password in Claude context | Never — use WP-CLI config commands |
+| Auto-selecting Docker container by image name | No user input needed | Picks wrong container on multi-container setups | Never — always confirm with user |
+| Using line numbers as finding ID hash input | Simple to implement | IDs change on every code change, breaking trends | Never — hash code content instead |
+| Generating finding IDs from file path + line only | Deterministic, unique | Completely breaks trend comparison after any refactor | Never for trends; acceptable for single-run reports |
+| Skipping Bedrock/alternate WP structure detection | Works for 80% of installs | Fails silently for agency/developer local sites | Never in production tool |
+| Confirming N+1 from static analysis alone | Faster results | High false positive rate, erodes user trust | Never — always qualify as "potential" |
+| Storing Docker container name without confirming WP | Saves a detection step | Wrong container silently used for all diagnostics | Never — verify wp-config.php exists in container |
+| Embedding git token in clone URL | Works immediately | Token visible in process list, git log, Claude context | Never — use credential helpers |
+| Comparing finding counts for trends (not finding IDs) | Simple math | Cannot tell new issues from renamed/moved issues | Acceptable as supplementary metric only |
 
 ---
 
@@ -453,16 +374,17 @@ Common mistakes when connecting to external services.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| SSH connections | Using password auth instead of keys | Ed25519 key with passphrase, stored in SSH config |
-| rsync transfers | Not checking exit codes | Check `$?` after rsync, distinguish errors (1-24) |
-| WP-CLI remote | Assuming ~/.bash_profile loads | Use `ssh -t` or explicit `source ~/.bash_profile` |
-| MySQL via SSH | Direct connection attempt | Tunnel: `ssh -L 3306:localhost:3306 user@host` then connect |
-| Large file detection | Syncing before checking size | `du -sh` check first, warn if >1GB |
-| Error logs | Assuming /var/log/apache2/ | Check wp-content/debug.log, ~/logs/, and ask hosting docs |
-| Plugin updates | Running `wp plugin update` directly | Read-only diagnostics shouldn't modify remote site |
-| Database exports | `wp db export` without compression | Use `wp db export - | gzip > backup.sql.gz` |
-| Managed WordPress hosts | Assuming standard filesystem paths | WP Engine/Kinsta/Flywheel have custom layouts |
-| SSH keys | SHA-1 RSA keys (deprecated 2025) | Ed25519 keys, check host SSH version compatibility |
+| wp-config.php parsing | Grep for `define('DB_PASSWORD'` | Use `wp config get DB_PASSWORD` via WP-CLI |
+| Docker exec | Running without `-u` flag, hitting permission denied | Use `docker exec -u root` for read-only diagnostic access |
+| Docker container discovery | Filtering by image name `wordpress` | Ask user or present list; confirm with wp-config.php check |
+| git clone (HTTPS private repo) | Embedding token in URL | Use GIT_ASKPASS or git credential helper |
+| git clone (SSH) | Assuming github.com in known_hosts | Run `ssh-keyscan` before clone attempt |
+| Local by Flywheel DB | Assuming `localhost:3306` | Flywheel uses a socket file or non-standard port per-site |
+| MAMP DB | Assuming standard MySQL port 3306 | MAMP defaults to 8889 for MySQL port |
+| WP-CLI on local path | Assuming `wp` is in PATH | On local sites, user may need `./vendor/bin/wp` (Bedrock) |
+| Table prefix in queries | Hardcoded `wp_options` | Read `table_prefix` from wp-config.php first |
+| Multisite DB | Querying blog 1 tables only | Detect `MULTISITE` constant and document scope limitation |
+| Direct MySQL connection | `-p` flag with password (visible in `ps`) | Use `MYSQL_PWD` env var or MySQL option file |
 
 ---
 
@@ -472,13 +394,14 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Syncing wp-content/uploads | rsync takes 20+ minutes, fills disk | Exclude uploads directory, only sync sample if needed | Sites with >1GB uploads |
-| Reading all plugin files into Claude | Slow responses, timeouts | Analyze plugin list first, then selective file reads | Sites with 50+ plugins |
-| No caching of site metadata | Re-fetch WP version every command | Cache site info in sites.json (version, PHP, WP-CLI path) | When running 10+ diagnostics |
-| Syncing node_modules/vendor | Transfer 100MB+ of dependencies | Always exclude node_modules, vendor, .git | Any site with npm/composer |
-| Full database export for diagnostics | 500MB+ download, context overflow | Use targeted queries: `wp db query "SELECT ..."` | Database >100MB |
-| Transferring .log files | Hundreds of MB of old errors | Exclude *.log, or only sync last 1000 lines | Sites with verbose logging |
-| Not using rsync compression | 10x slower over slow networks | Always use `-z` flag | Large transfers over <10Mbps |
+| Reading entire wp-config.php into Claude context | Works on small files | Exposes DB password in context | Every run — never do this |
+| git clone with full history for code analysis | Works on small repos | 500MB+ clone for mature repos | Any repo with > 2 years of history |
+| Running DB query analysis without row count context | Returns results | Misleading "recommendations" for micro-sites | When autoloaded data is 100KB (fine) but flagged as "high" |
+| Autoload size check with hardcoded threshold | Consistent threshold | False positives on tiny sites, false negatives on large ones | Sites with < 200 plugins where 3MB is actually fine |
+| Scanning all files in git repo including vendor/ | Thorough | 20,000 false positives in vendor dependencies | Any repo using Composer with vendor committed |
+| Finding trends comparison without schema versioning | Works in v1 | Old findings JSON unreadable after schema update | On first schema change (guaranteed to happen) |
+| Docker exec per-command overhead | Simple implementation | Slow diagnostics when each check requires exec round-trip | More than 20 diagnostic checks in sequence |
+| Cloning entire git repo to analyze WP code | Gets all files | Most git repos for WP projects include non-WP directories | Monorepos or repos with multiple projects |
 
 ---
 
@@ -488,16 +411,14 @@ Domain-specific security issues beyond general web security.
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Committing sites.json with credentials | All managed sites compromised | Add sites.json to .gitignore in Phase 1 |
-| Logging SSH commands in conversation | Credentials visible in Claude history | Sanitize output, use SSH config aliases |
-| Using root SSH user | Unrestricted access if compromised | Use limited user, sudo only when needed |
-| Storing private keys in plugin directory | Keys committed to git | Reference keys in ~/.ssh/, never copy |
-| No passphrase on SSH keys | Key theft = immediate access | Always use passphrases, use ssh-agent |
-| Plain-text wp-config.php in repo | Database credentials exposed | .gitignore wp-config.php, use example file |
-| Running `wp plugin install` remotely | Unexpected code execution on production | Read-only operations only, propose changes |
-| No SSH key rotation | Compromised keys valid forever | Rotate keys every 90 days, document in README |
-| Exposing database credentials in error messages | Credentials in logs/support tickets | Catch errors, redact before displaying |
-| Using deprecated RSA SHA-1 keys | Rejected by modern hosts | Use Ed25519 keys for all new connections |
+| Reading wp-config.php to display DB credentials | DB password in Claude conversation history | Never read or display DB_PASSWORD; use WP-CLI for DB ops |
+| Storing DB credentials in site profile JSON | Credentials in potentially-committed sites.json | Store connection type and WP path only; credentials accessed on-demand via WP-CLI |
+| Running `docker exec -u root` permanently (not just for reads) | Unnecessary root access escalation | Limit `-u root` to read operations; scope docker permissions |
+| Git HTTPS clone URL with embedded token | Token in Claude context, process list, git log | Use credential helper or SSH; never URL-embed tokens |
+| Caching wp-config.php content in memory/ directory | DB password persisted to disk in git-tracked location | Never cache wp-config.php; cache only parsed safe values (prefix, debug status) |
+| Direct MySQL connection without SSL on remote tunnel | Credentials and data in plaintext on network | For remote DB access, always use SSH tunnel; for local, socket is fine |
+| Including wp-config.php in diagnostic report output | Password in shared/stored report | Strip credential constants from any config section of reports |
+| Docker container with host network mode | Container escapes isolation | Document: never require host networking; use container exec only |
 
 ---
 
@@ -507,16 +428,15 @@ Common user experience mistakes in this domain.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No progress indication during rsync | User thinks it's frozen, kills process | Stream rsync output with progress: `rsync --info=progress2` |
-| Cryptic SSH errors | User can't fix connection issues | Detect common errors, provide helpful messages |
-| Assuming WP-CLI knowledge | Users don't understand what tool does | Explain: "WP-CLI lets us query your site without FTP" |
-| No size warnings before sync | User's disk fills up unexpectedly | Show size estimate, ask confirmation for >500MB |
-| Silent failures | Commands fail, user gets no diagnostic | Always echo command output, explain errors |
-| Requiring SSH config expertise | Users can't set up connections | Provide wizard: "Enter hostname, username, we'll create SSH config" |
-| No validation before running | Typos cause destructive operations | Confirm destructive operations, show --dry-run preview |
-| Assuming localhost testing | Users run against production | Warn: "This will modify PRODUCTION site - confirm (yes/no)" |
-| Not explaining diagnostic findings | "Plugin X is outdated" without context | Explain impact: "Plugin X 1.2 has known security issue, update to 1.5" |
-| No rollback for applied patches | User applies patch, breaks site | Generate patch files for review, not direct application |
+| Failing without explanation when wp-config.php uses env vars | User sees "could not connect to DB" with no guidance | Detect env var pattern, explain: "DB credentials are environment-injected. WP-CLI will be used for DB access." |
+| Asking for Docker container name without showing `docker ps` output | User doesn't know available container names | Run `docker ps --format "{{.Names}}\t{{.Image}}"` first, then ask |
+| Git clone progress not shown during large repo clone | User thinks tool is frozen | Use `git clone --progress` and stream output |
+| N+1 finding list with 30+ items and no severity ranking | User overwhelmed, ignores all findings | Cap static-analysis findings at 10, rank by estimated impact |
+| DB autoload report with no context for what "5MB" means | User doesn't know if 5MB is bad | Include benchmark: "WordPress recommends < 1MB. Critical at > 10MB." |
+| Architecture findings without "at this data scale" qualifier | User over-reacts to low-risk patterns | Always include data volume context in architecture findings |
+| Trends showing "degraded" without showing what changed | User can't act on trend information | Show diff: "3 new Critical findings since {date}: {list}" |
+| Local directory connection flow identical to SSH flow | Confuses users who just want to point at a folder | Local mode should ask only: "Path to WordPress directory?" — nothing else |
+| Silent success when DB analysis finds nothing unusual | User unsure if analysis ran | Always show "DB analysis complete — no issues found" confirmation |
 
 ---
 
@@ -524,16 +444,16 @@ Common user experience mistakes in this domain.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **SSH connection works** → Often missing: Key passphrase setup in ssh-agent
-- [ ] **rsync completes successfully** → Often missing: Permission normalization (--chmod)
-- [ ] **WP-CLI detected** → Often missing: Version compatibility check (2.x vs 3.x)
-- [ ] **Plugin list retrieved** → Often missing: Symlink detection (real vs apparent paths)
-- [ ] **Diagnostics generated** → Often missing: Actionable recommendations (not just issues list)
-- [ ] **Patch file created** → Often missing: Testing instructions, rollback procedure
-- [ ] **sites.json created** → Often missing: .gitignore entry to prevent commit
-- [ ] **Error handling added** → Often missing: User-friendly error messages
-- [ ] **Documentation written** → Often missing: Platform-specific notes (macOS vs Linux)
-- [ ] **Security review done** → Often missing: Credential leak audit (git log, error messages)
+- [ ] **wp-config.php credential extraction works:** Often missing — testing against Docker/Flywheel sites with `getenv()` patterns. Verify: test against a Docker-compose WordPress install.
+- [ ] **DB table prefix is read dynamically:** Often missing — queries hardcode `wp_options`. Verify: test against a site with `table_prefix = 'custom_'`.
+- [ ] **Docker container selection confirmed:** Often missing — tool auto-picks container, doesn't verify wp-config.php inside. Verify: test with two containers running simultaneously.
+- [ ] **Git clone handles private repos:** Often missing — works on public repos, fails silently on private. Verify: test with a private GitHub repo that requires auth.
+- [ ] **Finding IDs stable across refactors:** Often missing — IDs change when developer formats code. Verify: run two diagnostic scans with only whitespace changes between them; compare finding IDs.
+- [ ] **N+1 detection has confidence tiers:** Often missing — all loop+query patterns flagged equally. Verify: check if `get_option()` inside a loop is marked differently from `$wpdb->get_results()` inside a loop.
+- [ ] **Autoload analysis uses correct table prefix:** Often missing — returns 0 results on custom prefix sites. Verify: test against site with non-default prefix; confirm results match Site Health check.
+- [ ] **Trends comparison handles missing previous run:** Often missing — crashes when no baseline exists. Verify: run trends comparison on a site with no historical findings.
+- [ ] **Architecture review excludes WP core CPTs:** Often missing — flags `attachment`, `revision`, `nav_menu_item` as misuse. Verify: check that built-in WP CPTs don't appear in architecture findings.
+- [ ] **Bedrock/non-standard WP structure detected:** Often missing — fails with generic "not a WordPress install." Verify: test against a Bedrock project directory.
 
 ---
 
@@ -543,16 +463,14 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Credentials committed to git | HIGH | 1. Rotate all SSH keys immediately<br>2. Change all passwords<br>3. `git filter-repo` to purge history<br>4. Force push (if private repo)<br>5. Notify all affected site owners |
-| rsync --delete wiped local directory | MEDIUM | 1. Re-sync from remote (if still intact)<br>2. Restore from Time Machine/backup<br>3. Document incident, add --dry-run to docs |
-| Wrong rsync path synced | LOW | 1. Delete local directory<br>2. Fix path in command<br>3. Re-run with --dry-run first |
-| WP-CLI command failed (wrong path) | LOW | 1. Probe for WP-CLI: `which wp`<br>2. Store correct path in sites.json<br>3. Retry with absolute path |
-| Context window exhausted | MEDIUM | 1. Delete local site directory<br>2. Restart Claude Code<br>3. Re-sync with exclusions (no uploads/cache)<br>4. Use incremental analysis |
-| File permissions corrupted | LOW | 1. Fix directories: `find . -type d -exec chmod 755 {} \;`<br>2. Fix files: `find . -type f -exec chmod 644 {} \;`<br>3. Fix wp-config: `chmod 600 wp-config.php` |
-| Symlinked plugin broken | LOW | 1. Use `rsync -L` to follow symlinks<br>2. Re-sync affected plugins<br>3. Document symlink usage in sites.json |
-| macOS openrsync incompatibility | LOW | 1. Install GNU rsync: `brew install rsync`<br>2. Use explicit path: `/opt/homebrew/bin/rsync`<br>3. Or simplify flags to openrsync subset |
-| SSH key deprecated (RSA SHA-1) | MEDIUM | 1. Generate Ed25519 key: `ssh-keygen -t ed25519`<br>2. Copy to remote: `ssh-copy-id -i ~/.ssh/id_ed25519`<br>3. Update SSH config<br>4. Test, then remove old key |
-| Destructive command run on production | HIGH | 1. Restore from backup (if available)<br>2. If no backup: document damage<br>3. Add confirmation prompts to all destructive operations<br>4. Require --dry-run before --execute |
+| DB password appeared in Claude conversation | HIGH | 1. Rotate DB password on the affected site immediately. 2. Audit Claude conversation history for any stored/shared sessions. 3. Implement WP-CLI-only DB access going forward. |
+| Wrong Docker container used for analysis | LOW | 1. Identify correct container via `docker ps`. 2. Re-run connection with explicit container name. 3. Update site profile with correct container. |
+| Git token exposed in clone URL | HIGH | 1. Revoke the PAT immediately. 2. Generate new PAT with minimal scope. 3. Implement credential helper flow. 4. Check git log for URL in commit history. |
+| Table prefix hardcoded → queries returned empty | LOW | 1. Read actual prefix via `wp config get table_prefix`. 2. Re-run affected DB queries with correct prefix. 3. Update all query templates. |
+| Finding IDs unstable → trends data invalid | MEDIUM | 1. Archive existing trends data as "pre-v2" baseline. 2. Implement content-based ID hashing. 3. Regenerate baseline findings for all sites. 4. Discard old trends data (incompatible). |
+| N+1 over-reporting → user dismissed all findings | MEDIUM | 1. Add confidence tiers to detection. 2. Re-run analysis with tiered output. 3. Include note in report: "Previous analysis may have over-reported performance findings." |
+| Bedrock site fails local connect → user stuck | LOW | 1. Ask user for path to `wp-config.php` directly. 2. Add Bedrock detection to local connection flow. 3. Document Bedrock support in release notes. |
+| Autoload analysis returned 0 (wrong prefix) | LOW | 1. Read prefix, re-run queries. 2. Verify results match Site Health check. 3. Add prefix detection as mandatory first step. |
 
 ---
 
@@ -562,61 +480,64 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| SSH credential exposure | Phase 1: Foundation | .gitignore exists, sites.json not in git status |
-| rsync --delete disasters | Phase 1: Foundation | Docs include --dry-run, exclusion examples |
-| WP-CLI path assumptions | Phase 2: Site Detection | Probe WP-CLI, store path in sites.json |
-| Context window exhaustion | Phase 2: Site Detection | Size check before sync, exclude uploads/cache |
-| Cross-platform rsync issues | Phase 1: Foundation | Platform detection, compatible flags documented |
-| File permissions corrupted | Phase 2: Site Detection | rsync uses --chmod or docs explain fix |
-| Symlinked plugins break detection | Phase 3: Plugin Analysis | Detect symlinks, handle with -L flag |
-| Credentials committed to git | Phase 1: Foundation | .gitignore added before sites.json creation |
-| No progress indication | Phase 4: UX Polish | rsync shows progress, size estimates given |
-| Silent WP-CLI failures | Phase 2: Site Detection | Check exit codes, explain errors |
+| wp-config.php credential parsing failures | DB Analysis Phase | Test against Docker and Flywheel sites with `getenv()` patterns |
+| DB credential exposure in Claude context | DB Analysis Phase | Audit that no DB_PASSWORD value ever appears in diagnostic output |
+| Docker container discovery unreliable | Multi-Source Access Phase | Test with 2+ running containers; confirm correct one selected |
+| Docker permission denied reading wp-config | Multi-Source Access Phase | Test `docker exec -u root` flow on default WordPress Docker image |
+| Git clone auth fails silently | Multi-Source Access Phase | Test with private repo; verify no blocking prompt or token exposure |
+| N+1 false positives erode trust | Performance Detection Phase | Validate `get_option()` in loops is NOT flagged as N+1 |
+| Table prefix hardcoded in SQL | DB Analysis Phase | Test autoload query against site with `mysite_` prefix; confirm non-zero results |
+| Finding ID instability breaks trends | Findings Trends Phase | Add blank line to scanned file; confirm finding IDs unchanged |
+| Bedrock install not detected | Multi-Source Access Phase | Test local connect against a Bedrock project; confirm detection message |
+| Architecture review over-flags CPTs | Architecture Review Phase | Test against WooCommerce site; confirm no false CPT misuse findings |
 
 ---
 
 ## Sources
 
-### SSH Security & Configuration
-- [SSH Config: The Complete Guide for 2026](https://devtoolbox.dedyn.io/blog/ssh-config-complete-guide)
-- [SSH Key Management Best Practices: Beyond SSH Keys](https://delinea.com/blog/ssh-key-management)
-- [Best practices for protecting SSH credentials | Google Cloud](https://cloud.google.com/compute/docs/connect/ssh-best-practices/credentials)
-- [SSH Security Best Practices](https://tailscale.com/learn/ssh-security-best-practices-protecting-your-remote-access-infrastructure)
+### WordPress DB Credential Handling
+- [wp-config.php – Common APIs Handbook | WordPress Developer](https://developer.wordpress.org/apis/wp-config-php/)
+- [Editing wp-config.php – Advanced Administration Handbook | WordPress Developer](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/)
+- [How to Harden WordPress With WP-Config & Avoid Data Exposure | Sucuri](https://blog.sucuri.net/2023/07/tips-for-wp-config-how-to-avoid-sensitive-data-exposure.html)
+- [WordPress wp-config.php: Useful Explanation in 2026 | ThimPress](https://thimpress.com/wp-config-php-connecting-wordpress-and-database/)
 
-### rsync Best Practices
-- [Everyday rsync - VKC.sh](https://vkc.sh/everyday-rsync/)
-- [How to Exclude Files and Directories with Rsync](https://linuxize.com/post/how-to-exclude-files-and-directories-with-rsync/)
-- [Favorite rsync Commands for Copying WordPress Sites](https://guides.wp-bullet.com/favorite-rsync-commands-for-copying-wordpress-sites/)
-- [rsync replaced with openrsync on macOS Sequoia](https://derflounder.wordpress.com/2025/04/06/rsync-replaced-with-openrsync-on-macos-sequoia/)
-- [Rsync between Mac and Linux - Something Odd!](https://odd.blog/2020/10/06/rsync-between-mac-and-linux/)
+### Docker WordPress Pitfalls
+- [wordpress – Official Image | Docker Hub](https://hub.docker.com/_/wordpress)
+- [wp-content is owned by root on creation · Issue #436 · docker-library/wordpress](https://github.com/docker-library/wordpress/issues/436)
+- [How to Finally Fix the "Permission Denied" Error in Docker | Elementor](https://elementor.com/blog/permission-denied-error-in-docker/)
+- [docker wp-config.php & database connection · Issue #5513 · wp-cli/wp-cli](https://github.com/wp-cli/wp-cli/issues/5513)
+- [Local WordPress Development with Docker | Nelio Software](https://neliosoftware.com/blog/local-wordpress-development-with-docker/)
 
-### WP-CLI Remote Operations
-- [Running Commands Remotely - WP-CLI](https://make.wordpress.org/cli/handbook/guides/running-commands-remotely/)
-- [SSH: Allow to specify path of remote wp-cli](https://github.com/wp-cli/wp-cli/issues/5245)
-- [Streamline WordPress Deployment Using WP-CLI and SSH - 2026](https://www.wewp.io/wp-cli-ssh-wordpress-deployments-2026/)
+### Git Authentication
+- [Using SSH over the HTTPS port – GitHub Docs](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port)
+- [Git clone SSH vs HTTPS | Graphite](https://graphite.com/guides/git-clone-ssh-vs-https)
+- [How to Use HTTPS or SSH for Git in 2026 | TheLinuxCode](https://thelinuxcode.com/how-to-use-https-or-ssh-for-git-in-2026-practical-fast-and-low-friction/)
 
-### WordPress Diagnostics & Security
-- [WordPress File Permissions Explained (755 vs 644 vs 600)](https://wpthrill.com/wordpress-file-permissions-755-vs-644-vs-600/)
-- [How to Set Correct WordPress File Permissions](https://jetpack.com/resources/wordpress-file-permissions/)
-- [SQL Injection in WordPress – Everything You Need To Know](https://patchstack.com/articles/sql-injection/)
-- [WP Doctor Diagnostic Tool](https://www.scalahosting.com/kb/how-to-diagnose-wordpress-website-issues-with-wp-doctor/)
+### WordPress DB Optimization and Analysis
+- [Fixing Autoload Issues | WPMU DEV](https://wpmudev.com/docs/using-wordpress/fixing-autoload-issues/)
+- [WordPress Database Optimization Guide: Wp_options, Autoload And Table Bloat | DCHost](https://www.dchost.com/blog/en/wordpress-database-optimization-guide-wp_options-autoload-and-table-bloat/)
+- [Using WP-CLI doctor Command to Fix Large wp_options autoload Data | WP Bullet](https://guides.wp-bullet.com/using-wp-cli-doctor-command-to-fix-large-wp_options-autoload-data/)
+- [#61764 (Site Health: Autoloaded options could affect performance) – WordPress Trac](https://core.trac.wordpress.org/ticket/61764)
+- [The Art of the WordPress Transient: Performance, Persistence, and Database Bloat | Delicious Brains](https://deliciousbrains.com/the-art-of-the-wordpress-transient/)
 
-### Symlinks & WordPress Development
-- [Managing WordPress Development With Symlinks - Kinsta](https://kinsta.com/blog/managing-wordpress-development-with-symlinks/)
-- [WordPress should not try to remove themes or plugins recursively if the directory is a symlink](https://core.trac.wordpress.org/ticket/15134)
-- [Ultimate Guide 2025: WordPress Development with Symlinks](https://zalvis.com/blog/wordpress-development-with-symlinks.html)
+### Static Analysis False Positives
+- [Improving WordPress with Static Analysis | Matt Brown via Medium](https://muglug.medium.com/improving-wordpress-with-static-analysis-505cc5ba495d)
+- [Don't Underestimate Grep Based Code Scanning | Little Man In My Head](https://littlemaninmyhead.wordpress.com/2019/08/04/dont-underestimate-grep-based-code-scanning/)
+- [Analyze requests and application code for performance – WordPress VIP Documentation](https://docs.wpvip.com/performance/analyze-requests-and-application-code/)
 
-### Claude Context Management
-- [Claude Opus 4.6: 1 Million Token Context Window Guide](https://www.nxcode.io/resources/news/claude-1m-token-context-codebase-analysis-guide-2026)
-- [A practical guide to the Claude code context window size](https://www.eesel.ai/blog/claude-code-context-window-size)
-- [How Claude Code Got Better by Protecting More Context](https://hyperdev.matsuoka.com/p/how-claude-code-got-better-by-protecting)
+### Custom Post Type Architecture
+- [Custom Post Types for Scalable WordPress Site Architecture | iFlair](https://www.iflair.com/advanced-custom-post-type-usage-for-large-wordpress-sites/)
+- [The Ultimate Guide to WordPress Custom Post Types 2026 | Future Proof Digital](https://futureproofdigital.ie/blog/wordpress-custom-post-types/)
 
-### Credential Storage & Security
-- [How Should Credentials Be Stored in JSON?](https://sourcebae.com/blog/how-should-credentials-be-stored-in-json/)
-- [JSON Security Best Practices](https://jsonconsole.com/blog/json-security-best-practices-enterprise-applications)
-- [How To Create A .gitignore File To Hide Your API Keys](https://medium.com/@t.rosen2101/how-to-create-a-gitignore-file-to-hide-your-api-keys-95b3e6692e41)
+### Local WordPress Development Structures
+- [Local WordPress Development: From MAMP to Local by Flywheel | Duane Storey](https://duanestorey.com/posts/local-wordpress-development-from-mamp-to-local-by-flywheel)
+- [Using MAMP with WordPress for Local Development | Nexcess](https://www.nexcess.net/help/using-mamp-with-wordpress/)
+
+### JSON Schema Evolution (for Findings Trends)
+- [Schema Drift in Variant Data: A Practical Guide | Bix Tech](https://bix-tech.com/schema-drift-in-variant-data-a-practical-guide-to-building-change-proof-pipelines/)
+- [Handling Schema Evolution in Kafka Connect: Patterns, Pitfalls, and Practices | CloudNativePub](https://medium.com/cloudnativepub/handling-schema-evolution-in-kafka-connect-patterns-pitfalls-and-practices-391795d7d8b0)
 
 ---
 
-*Pitfalls research for: Claude CoWork Plugin for WordPress Remote Diagnostics*
-*Researched: 2026-02-16*
+*Pitfalls research for: WP Diagnostics Expert v2.0 — DB Analysis, Performance Detection, Architecture Review, Findings Trends, Multi-Source Access*
+*Researched: 2026-02-18*
