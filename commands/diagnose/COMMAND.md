@@ -3,7 +3,7 @@ name: diagnose
 description: Run diagnostic suite on a WordPress site with full, security-only, or code-only modes
 usage: /diagnose [mode] [on site-name]
 modes:
-  - full (default): All 6 diagnostic skills
+  - full (default): All 11 diagnostic skills
   - security-only: core-integrity, config-security, user-audit
   - code-only: code-quality, malware-scan
 ---
@@ -35,7 +35,7 @@ fi
 ```
 
 **Mode mappings:**
-- **full (default):** Runs all 6 diagnostic skills (core-integrity, config-security, user-audit, version-audit, malware-scan, code-quality)
+- **full (default):** Runs all 11 diagnostic skills (core-integrity, config-security, user-audit, version-audit, malware-scan, code-quality, db-autoload, db-transients, db-revisions, https-audit, file-permissions)
 - **security-only:** Runs security-focused skills only (core-integrity, config-security, user-audit)
 - **code-only:** Runs code-quality skills only (code-quality, malware-scan)
 
@@ -272,6 +272,11 @@ case $MODE in
       "diagnostic-version-audit:Version Audit"
       "diagnostic-malware-scan:Malware Scan"
       "diagnostic-code-quality:Code Quality Analysis"
+      "diagnostic-db-autoload:Autoload Bloat Analysis"
+      "diagnostic-db-transients:Transient Buildup Check"
+      "diagnostic-db-revisions:Post Revision Analysis"
+      "diagnostic-https-audit:HTTPS Configuration Audit"
+      "diagnostic-file-permissions:File Permission Check"
     )
     ;;
 esac
@@ -287,6 +292,9 @@ WP_CLI_SKILLS=(
   "diagnostic-core-integrity"
   "diagnostic-user-audit"
   "diagnostic-version-audit"
+  "diagnostic-db-autoload"
+  "diagnostic-db-transients"
+  "diagnostic-db-revisions"
 )
 
 # Check if WP-CLI is available
@@ -297,20 +305,20 @@ if [ "$WP_CLI_PATH" == "null" ] || [ -z "$WP_CLI_PATH" ]; then
   case "$SOURCE_TYPE" in
     "git")
       echo "Note: WP-CLI skills unavailable — git source has no live WordPress database."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
       ;;
     "local")
       echo "Note: WP-CLI not found locally. Install from https://wp-cli.org to enable database diagnostics."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
       ;;
     "docker")
       echo "Note: WP-CLI not found in container. Install WP-CLI inside the container to enable database diagnostics."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
       ;;
     *)
       # ssh (or legacy profiles without source_type)
       echo "Note: WP-CLI not available on remote server."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
       ;;
   esac
   echo ""
@@ -337,7 +345,7 @@ else
       # even if WP-CLI binary is present locally
       WP_CLI_AVAILABLE=false
       echo "Note: WP-CLI DB skills unavailable — git source has no live WordPress database."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
       echo ""
       ;;
   esac
