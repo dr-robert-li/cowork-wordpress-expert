@@ -177,38 +177,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMDS-02 | Phase 4 | Complete |
 | CMDS-03 | Phase 4 | Complete |
 | CMDS-04 | Phase 4 | Complete |
-| MSRC-01 | — | Pending |
-| MSRC-02 | — | Pending |
-| MSRC-03 | — | Pending |
-| MSRC-04 | — | Pending |
-| MSRC-05 | — | Pending |
-| MSRC-06 | — | Pending |
-| MSRC-07 | — | Pending |
-| DBHL-01 | — | Pending |
-| DBHL-02 | — | Pending |
-| DBHL-03 | — | Pending |
-| DBHL-04 | — | Pending |
-| DBHL-05 | — | Pending |
-| INFR-01 | — | Pending |
-| INFR-02 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
-| ARCH-01 | — | Pending |
-| ARCH-02 | — | Pending |
-| ARCH-03 | — | Pending |
-| TRND-01 | — | Pending |
-| TRND-02 | — | Pending |
-| TRND-03 | — | Pending |
-| BTCH-01 | — | Pending |
-| BTCH-02 | — | Pending |
+| MSRC-01 | Phase 5 | Pending |
+| MSRC-02 | Phase 5 | Pending |
+| MSRC-03 | Phase 5 | Pending |
+| MSRC-04 | Phase 5 | Pending |
+| MSRC-05 | Phase 5 | Pending |
+| MSRC-06 | Phase 5 | Pending |
+| MSRC-07 | Phase 5 | Pending |
+| DBHL-01 | Phase 6 | Pending |
+| DBHL-02 | Phase 6 | Pending |
+| DBHL-03 | Phase 6 | Pending |
+| DBHL-04 | Phase 6 | Pending |
+| DBHL-05 | Phase 6 | Pending |
+| INFR-01 | Phase 6 | Pending |
+| INFR-02 | Phase 6 | Pending |
+| PERF-01 | Phase 7 | Pending |
+| PERF-02 | Phase 7 | Pending |
+| PERF-03 | Phase 7 | Pending |
+| ARCH-01 | Phase 7 | Pending |
+| ARCH-02 | Phase 7 | Pending |
+| ARCH-03 | Phase 7 | Pending |
+| TRND-01 | Phase 8 | Pending |
+| TRND-02 | Phase 8 | Pending |
+| TRND-03 | Phase 8 | Pending |
+| BTCH-01 | Phase 8 | Pending |
+| BTCH-02 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 32 total (all complete)
-- v2 requirements: 24 total
-- Mapped to phases: 32 (v1) + 0 (v2, pending roadmap)
-- Unmapped: 24 ⚠️
+- v2 requirements: 25 total
+- Mapped to phases: 32 (v1) + 25 (v2)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-18 after v2.0 milestone requirements definition*
+*Last updated: 2026-02-18 after v2.0 roadmap creation (Phases 5-8)*

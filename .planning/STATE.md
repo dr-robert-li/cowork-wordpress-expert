@@ -9,10 +9,14 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 5 (Multi-Source Connection) — roadmap defined, not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-02-18 — Milestone v2.0 started
+Status: Ready for planning
+Last activity: 2026-02-18 — v2.0 roadmap created (Phases 5-8)
+
+```
+[v1 complete] [5:----] [6:----] [7:----] [8:----]
+```
 
 ## Performance Metrics
 
@@ -53,17 +57,23 @@ Recent decisions affecting current work:
 - Finding IDs use category prefix + check name + location hash for cross-scan tracking
 - Investigation workflow: intake → scout → plan → execute → review
 - Dual distribution: CoWork plugin ZIP + Claude Code CLI via npx wpxpert
+- v2.0: source_type field in sites.json routes all execution — ssh/local/docker/git (backward-compatible)
+- v2.0: WP-CLI is the mandatory DB access path — never parse wp-config.php for credentials
+- v2.0: Table prefix read dynamically via wp config get, never hardcoded
+- v2.0: Content-based finding IDs (hash on type + path + code snippet) — not line-number-based
+- v2.0: Docker container identity confirmed by user before profile save; probe for wp-config.php to verify WP presence
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-None currently.
+- Phase 5 (Docker): Container WP path detection varies by image (official /var/www/html, Lando /app/public, custom varies). Probe sequence needs empirical validation against 2-3 real Docker setups before plan is written.
+- Phase 7 (Performance): wp package install for wp-cli/profile-command fails on shared hosting. Graceful degradation path (which checks skip, what user sees) must be specified before Phase 7 planning begins.
 
 ## Session Continuity
 
-Last session: 2026-02-18 — Milestone v2.0 started
-Stopped at: Defining requirements
-Resume file: None
+Last session: 2026-02-18 — v2.0 roadmap created
+Stopped at: Roadmap written, ready for Phase 5 planning
+Resume with: `/gsd:plan-phase 5`
