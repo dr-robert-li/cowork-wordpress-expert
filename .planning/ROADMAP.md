@@ -26,7 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### v2.0 Phases
 
-- [ ] **Phase 5: Multi-Source Connection** - Local, Docker, and git access modes alongside existing SSH
+- [x] **Phase 5: Multi-Source Connection** - Local, Docker, and git access modes alongside existing SSH (completed 2026-02-18)
 - [ ] **Phase 6: Database Health & Infrastructure Audits** - DB optimization analysis, HTTPS/SSL, and file permissions
 - [ ] **Phase 7: Performance & Architecture** - N+1 pattern detection, cron analysis, CPT/hook abuse review
 - [ ] **Phase 8: Findings Trends & Batch Operations** - Cross-scan trend tracking and multi-site batch diagnostics
@@ -111,7 +111,7 @@ Plans:
   3. User can run /connect with a git repository URL and have it cloned to .sites/{name}/ and treated as a local directory for analysis
   4. An existing SSH profile continues to work without any modification (backward-compatible sites.json schema)
   5. Plugin declines DB-dependent skills for source types without DB access and explains why to the user
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 05-01-PLAN.md — Multi-source /connect: source type detection, local/Docker/git/SSH flows, sites.json schema extension
@@ -127,10 +127,12 @@ Plans:
   3. User can see post revision counts per post type and a recommendation for revision limits
   4. User can audit HTTPS configuration (siteurl/home scheme, FORCE_SSL_ADMIN constant, mixed content indicators)
   5. User can check file and directory permissions against WordPress security recommendations (wp-config.php, uploads/, executable detection)
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD
+- [ ] 06-01-PLAN.md — Database health skills: autoload bloat, transient buildup, post revision analysis
+- [ ] 06-02-PLAN.md — Infrastructure audit skills: HTTPS/SSL configuration, file permissions
+- [ ] 06-03-PLAN.md — Register all Phase 6 skills in /diagnose command
 
 ### Phase 7: Performance & Architecture
 **Goal**: Users can detect performance bottlenecks in code and scheduled events, and receive an AI-synthesized architectural health assessment
@@ -173,7 +175,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Connection & File Sync | 2/2 | Complete | 2026-02-16 |
 | 3. Diagnostic Skills & Reporting | 4/4 | Complete | 2026-02-17 |
 | 4. Command Workflows | 0/2 | Planning complete | - |
-| 5. Multi-Source Connection | 1/2 | In Progress|  |
-| 6. Database Health & Infrastructure Audits | 0/? | Not started | - |
+| 5. Multi-Source Connection | 2/2 | Complete   | 2026-02-18 |
+| 6. Database Health & Infrastructure Audits | 0/3 | Planning complete | - |
 | 7. Performance & Architecture | 0/? | Not started | - |
 | 8. Findings Trends & Batch Operations | 0/? | Not started | - |
