@@ -124,13 +124,16 @@ if [ "$PROFILE" == "null" ]; then
   exit 1
 fi
 
-# Extract connection details
+# Extract connection details (backward-compatible: source_type defaults to "ssh")
 HOST=$(echo "$PROFILE" | jq -r '.host')
 USER=$(echo "$PROFILE" | jq -r '.user')
 WP_PATH=$(echo "$PROFILE" | jq -r '.wp_path')
 LOCAL_PATH=$(echo "$PROFILE" | jq -r '.local_path')
 WP_CLI_PATH=$(echo "$PROFILE" | jq -r '.wp_cli_path')
 SITE_URL=$(echo "$PROFILE" | jq -r '.site_url')
+SOURCE_TYPE=$(echo "$PROFILE" | jq -r '.source_type // "ssh"')
+FILE_ACCESS=$(echo "$PROFILE" | jq -r '.file_access // "rsync"')
+CONTAINER_NAME=$(echo "$PROFILE" | jq -r '.container_name // empty')
 ```
 
 ### Auto-Connect if No Local Files
@@ -156,51 +159,88 @@ if [ ! -d "$LOCAL_PATH" ] || [ -z "$(ls -A "$LOCAL_PATH" 2>/dev/null)" ]; then
 fi
 ```
 
-## Section 3: Silent File Resync
+## Section 3: Source-Type-Gated File Resync
 
-Before running diagnostics, silently resync files from remote to ensure fresh data.
+Before running diagnostics, resync files from the source. The resync method depends on the source type — SSH uses rsync, local and git sources skip resync (files are always current), docker bind_mount skips resync, and docker_cp re-copies from the container.
 
 ### Resync Process
 
 ```bash
-echo "Syncing files from remote..."
+# Gate resync by source_type (read from Section 2 above)
+case "$SOURCE_TYPE" in
 
-# Detect rsync variant (macOS openrsync vs GNU rsync)
-RSYNC_VERSION=$(rsync --version 2>&1 | head -1)
+  "ssh")
+    # SSH: rsync fresh files from remote server (existing behavior — unchanged)
+    echo "Syncing files from remote..."
 
-# Build rsync command based on variant
-if echo "$RSYNC_VERSION" | grep -q "openrsync"; then
-  # macOS openrsync - use -v instead of --info=progress2
-  PROGRESS_FLAG="-v"
-else
-  # GNU rsync - use --info=progress2 for progress display
-  PROGRESS_FLAG="--info=progress2"
-fi
+    # Detect rsync variant (macOS openrsync vs GNU rsync)
+    RSYNC_VERSION=$(rsync --version 2>&1 | head -1)
 
-# Execute rsync with exclusions (quietly - redirect verbose output)
-rsync -az \
-  $PROGRESS_FLAG \
-  --exclude='wp-content/uploads/' \
-  --exclude='wp-content/cache/' \
-  --exclude='wp-content/w3tc-cache/' \
-  --exclude='node_modules/' \
-  --exclude='vendor/' \
-  --exclude='.git/' \
-  --exclude='.env' \
-  --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
-  "${USER}@${HOST}:${WP_PATH}/" "$LOCAL_PATH/" 2>&1 | grep -v "^[^ ]" || true
+    # Build rsync command based on variant
+    if echo "$RSYNC_VERSION" | grep -q "openrsync"; then
+      # macOS openrsync - use -v instead of --info=progress2
+      PROGRESS_FLAG="-v"
+    else
+      # GNU rsync - use --info=progress2 for progress display
+      PROGRESS_FLAG="--info=progress2"
+    fi
 
-RSYNC_EXIT=$?
+    # Execute rsync with exclusions (quietly - redirect verbose output)
+    rsync -az \
+      $PROGRESS_FLAG \
+      --exclude='wp-content/uploads/' \
+      --exclude='wp-content/cache/' \
+      --exclude='wp-content/w3tc-cache/' \
+      --exclude='node_modules/' \
+      --exclude='vendor/' \
+      --exclude='.git/' \
+      --exclude='.env' \
+      --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
+      "${USER}@${HOST}:${WP_PATH}/" "$LOCAL_PATH/" 2>&1 | grep -v "^[^ ]" || true
 
-if [ $RSYNC_EXIT -eq 0 ]; then
-  echo "Files synced."
-else
-  echo "WARNING: File sync failed. Continuing with cached files."
-  echo "Some findings may be outdated if files have changed remotely."
-fi
+    RSYNC_EXIT=$?
+
+    if [ $RSYNC_EXIT -eq 0 ]; then
+      echo "Files synced."
+    else
+      echo "WARNING: File sync failed. Continuing with cached files."
+      echo "Some findings may be outdated if files have changed remotely."
+    fi
+    ;;
+
+  "local")
+    # Local: files are accessed directly from the local filesystem — no resync needed
+    echo "Files are accessed directly from local filesystem — no resync needed."
+    ;;
+
+  "docker")
+    if [ "$FILE_ACCESS" = "bind_mount" ]; then
+      # Docker bind mount: files are always current via the host mount path
+      echo "Files accessed via bind mount — always current."
+    else
+      # Docker cp: re-copy from container to get fresh files
+      echo "Syncing files from container..."
+      docker cp "${CONTAINER_NAME}:${WP_PATH}/." "$LOCAL_PATH" 2>&1
+
+      DOCKER_CP_EXIT=$?
+      if [ $DOCKER_CP_EXIT -eq 0 ]; then
+        echo "Files synced from container."
+      else
+        echo "WARNING: docker cp failed. Continuing with cached files."
+        echo "Some findings may be outdated. Verify container '$CONTAINER_NAME' is running."
+      fi
+    fi
+    ;;
+
+  "git")
+    # Git: use existing local files — never auto-pull on resync
+    echo "Git source — using existing local files. Run 'git pull' manually if you want to update before diagnosing."
+    ;;
+
+esac
 ```
 
-**Error handling:** If resync fails, warn user but continue with cached files. Do NOT abort diagnostics.
+**Error handling:** If resync fails (SSH or docker cp), warn user but continue with cached files. Do NOT abort diagnostics. Local, bind_mount, and git sources never attempt resync.
 
 ## Section 4: Skill Execution with Inline Progress
 
@@ -237,9 +277,9 @@ case $MODE in
 esac
 ```
 
-### WP-CLI Dependency Check
+### WP-CLI Dependency Check and Source-Type Routing
 
-Some skills require WP-CLI on the remote server. Check availability and skip WP-CLI-dependent skills if not installed:
+Some skills require WP-CLI. The WP-CLI invocation method depends on source_type. Check availability and configure the WP-CLI command for the active source type:
 
 ```bash
 # WP-CLI dependent skills
@@ -251,14 +291,60 @@ WP_CLI_SKILLS=(
 
 # Check if WP-CLI is available
 if [ "$WP_CLI_PATH" == "null" ] || [ -z "$WP_CLI_PATH" ]; then
-  echo "Note: WP-CLI not available on remote server."
-  echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
-  echo ""
   WP_CLI_AVAILABLE=false
+
+  # Explain why WP-CLI skills will be skipped (source-type-aware message)
+  case "$SOURCE_TYPE" in
+    "git")
+      echo "Note: WP-CLI skills unavailable — git source has no live WordPress database."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      ;;
+    "local")
+      echo "Note: WP-CLI not found locally. Install from https://wp-cli.org to enable database diagnostics."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      ;;
+    "docker")
+      echo "Note: WP-CLI not found in container. Install WP-CLI inside the container to enable database diagnostics."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      ;;
+    *)
+      # ssh (or legacy profiles without source_type)
+      echo "Note: WP-CLI not available on remote server."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      ;;
+  esac
+  echo ""
 else
   WP_CLI_AVAILABLE=true
+
+  # Set WP-CLI invocation prefix based on source type
+  # This prefix is prepended to all WP-CLI commands in WP-CLI-dependent skills
+  case "$SOURCE_TYPE" in
+    "ssh")
+      # Existing SSH behavior — unchanged: run wp over SSH
+      WP_CLI_PREFIX="ssh ${USER}@${HOST} ${WP_CLI_PATH} --path=${WP_PATH}"
+      ;;
+    "docker")
+      # Docker: run wp inside container via docker exec
+      WP_CLI_PREFIX="docker exec ${CONTAINER_NAME} ${WP_CLI_PATH} --path=${WP_PATH}"
+      ;;
+    "local")
+      # Local: run wp directly with --path flag (no SSH)
+      WP_CLI_PREFIX="${WP_CLI_PATH} --path=${WP_PATH}"
+      ;;
+    "git")
+      # Git sources never have a live database — WP-CLI DB commands will not work
+      # even if WP-CLI binary is present locally
+      WP_CLI_AVAILABLE=false
+      echo "Note: WP-CLI DB skills unavailable — git source has no live WordPress database."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit) will be skipped."
+      echo ""
+      ;;
+  esac
 fi
 ```
+
+**WP_CLI_PREFIX usage:** When executing WP-CLI-dependent skills, skills substitute `wp {command}` with `$WP_CLI_PREFIX {command}`. For SSH: `ssh user@host /usr/local/bin/wp --path=/var/www/html core verify-checksums`. For Docker: `docker exec mycontainer wp --path=/var/www/html core verify-checksums`. For Local: `/usr/local/bin/wp --path=/var/www/mysite core verify-checksums`.
 
 ### Sequential Skill Execution
 
@@ -290,8 +376,22 @@ for SKILL_ENTRY in "${SKILLS[@]}"; do
 
   # Skip if WP-CLI required but not available
   if [ "$REQUIRES_WP_CLI" == "true" ] && [ "$WP_CLI_AVAILABLE" == "false" ]; then
-    echo "[$SKILL_DISPLAY_NAME] Skipped (WP-CLI unavailable)"
-    SKILLS_SKIPPED+=("$SKILL_DISPLAY_NAME (WP-CLI unavailable)")
+    # Inline skip message with source type and actionable guidance
+    case "$SOURCE_TYPE" in
+      "git")
+        echo "[$SKILL_DISPLAY_NAME] Skipped — WP-CLI not available (git source). Connect via SSH or Docker with WP-CLI for this check."
+        ;;
+      "local")
+        echo "[$SKILL_DISPLAY_NAME] Skipped — WP-CLI not available (local source). Install WP-CLI from https://wp-cli.org to enable this check."
+        ;;
+      "docker")
+        echo "[$SKILL_DISPLAY_NAME] Skipped — WP-CLI not available (docker source). Install WP-CLI inside the container to enable this check."
+        ;;
+      *)
+        echo "[$SKILL_DISPLAY_NAME] Skipped — WP-CLI not available (${SOURCE_TYPE} source). Install WP-CLI on the server to enable this check."
+        ;;
+    esac
+    SKILLS_SKIPPED+=("$SKILL_DISPLAY_NAME")
     continue
   fi
 
@@ -301,6 +401,7 @@ for SKILL_ENTRY in "${SKILLS[@]}"; do
   # Execute the skill following its SKILL.md instructions
   # Each skill is in skills/{skill-id}/SKILL.md
   # Skills return JSON array of findings
+  # WP-CLI-dependent skills use $WP_CLI_PREFIX for all wp commands
 
   SKILL_OUTPUT=$(bash -c "
     # Source the skill logic from skills/${SKILL_ID}/SKILL.md
@@ -328,7 +429,7 @@ for SKILL_ENTRY in "${SKILLS[@]}"; do
     echo -e "\r[$SKILL_DISPLAY_NAME] $CRITICAL_COUNT critical, $WARNING_COUNT warning, $INFO_COUNT info"
 
     # Show critical findings immediately (inline)
-    CRITICAL_FINDINGS=$(echo "$SKILL_FINDINGS" | jq -r '.[] | select(.severity == "Critical") | "  ⚠ " + .title + ": " + .summary')
+    CRITICAL_FINDINGS=$(echo "$SKILL_FINDINGS" | jq -r '.[] | select(.severity == "Critical") | "  ! " + .title + ": " + .summary')
     if [ -n "$CRITICAL_FINDINGS" ] && [ "$CRITICAL_FINDINGS" != "" ]; then
       echo "$CRITICAL_FINDINGS"
     fi
@@ -347,10 +448,33 @@ for SKILL_ENTRY in "${SKILLS[@]}"; do
 
 done
 
+# If any skills were skipped due to source type limitations, show a summary
+WP_CLI_SKIPPED_COUNT=0
+WP_CLI_SKIPPED_NAMES=()
+for SKIPPED in "${SKILLS_SKIPPED[@]}"; do
+  if [[ "$SKIPPED" != *"execution error"* ]]; then
+    WP_CLI_SKIPPED_COUNT=$((WP_CLI_SKIPPED_COUNT + 1))
+    WP_CLI_SKIPPED_NAMES+=("$SKIPPED")
+  fi
+done
+
+if [ "$WP_CLI_SKIPPED_COUNT" -gt 0 ]; then
+  echo ""
+  echo "Note: $WP_CLI_SKIPPED_COUNT skill(s) skipped due to source type limitations."
+  echo "Skipped: $(IFS=', '; echo "${WP_CLI_SKIPPED_NAMES[*]}")"
+  echo "Reason: ${SOURCE_TYPE} source without WP-CLI access"
+fi
+
 echo ""
 ```
 
 **Error recovery:** If a skill fails (SSH timeout, invalid JSON, command error), mark it as "skipped", display warning, and continue to next skill. Do NOT abort the entire diagnostic run.
+
+**Source-type routing summary:**
+- **SSH:** WP-CLI runs via SSH (`ssh user@host wp --path=... command`)
+- **Docker:** WP-CLI runs via docker exec (`docker exec container wp --path=... command`)
+- **Local:** WP-CLI runs directly (`wp --path=... command`)
+- **Git:** WP-CLI skills always skipped — no live database in a git checkout
 
 ## Section 5: Report Generation
 
