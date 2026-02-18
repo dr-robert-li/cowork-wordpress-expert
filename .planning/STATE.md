@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 5 (Multi-Source Connection) — in progress (1/2 plans complete)
-Plan: 05-01 complete, 05-02 next
-Status: In progress
-Last activity: 2026-02-19 — 05-01 complete: /connect multi-source command
+Phase: 5 (Multi-Source Connection) — complete (2/2 plans complete)
+Plan: 05-02 complete — phase done
+Status: Phase 5 complete — ready for Phase 6
+Last activity: 2026-02-19 — 05-02 complete: /diagnose source-type gating + /status badges
 
 ```
-[v1 complete] [5:1---] [6:----] [7:----] [8:----]
+[v1 complete] [5:done] [6:----] [7:----] [8:----]
 ```
 
 ## Performance Metrics
@@ -33,7 +33,7 @@ Last activity: 2026-02-19 — 05-01 complete: /connect multi-source command
 | 02-connection-file-sync | 2 | 391s | 196s |
 | 03-diagnostic-skills-reporting | 4 | 689s | 172s |
 | 04-command-workflows | 2 | 319s | 160s |
-| 05-multi-source-connection | 1/2 | 264s | 264s |
+| 05-multi-source-connection | 2/2 | 442s | 221s |
 
 ## Accumulated Context
 
@@ -67,6 +67,9 @@ Recent decisions affecting current work:
 - v2.0: Partial Docker bind mount (only subdirectory mounted) falls back to docker cp for WP root
 - v2.0: file_access field values: rsync (ssh), direct (local/git), bind_mount (docker with bind), docker_cp (docker without bind)
 - v2.0: Git reconnect asks before pull — never auto-pull on reconnect
+- v2.0: WP_CLI_PREFIX pattern routes WP-CLI invocation by source type (ssh=SSH, docker=docker exec, local=direct)
+- v2.0: Git sources always skip WP-CLI skills even when local wp binary exists — no live DB in git checkouts
+- v2.0: Capability gating consistent across /connect Section 10, /diagnose Section 4, and /status capabilities line
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 
 
 ## Session Continuity
 
-Last session: 2026-02-19 — 05-01 executed: /connect multi-source command
-Stopped at: Completed 05-multi-source-connection/05-01-PLAN.md
-Resume with: `/gsd:execute-phase 5` (05-02 next: /diagnose source-type gating)
+Last session: 2026-02-19 — 05-02 executed: /diagnose source-type gating + /status badges
+Stopped at: Completed 05-multi-source-connection/05-02-PLAN.md
+Resume with: `/gsd:execute-phase 6` (Phase 6: Database Performance next)
