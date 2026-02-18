@@ -9,21 +9,21 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 5 (Multi-Source Connection) — roadmap defined, not started
-Plan: —
-Status: Ready for planning
-Last activity: 2026-02-18 — v2.0 roadmap created (Phases 5-8)
+Phase: 5 (Multi-Source Connection) — in progress (1/2 plans complete)
+Plan: 05-01 complete, 05-02 next
+Status: In progress
+Last activity: 2026-02-19 — 05-01 complete: /connect multi-source command
 
 ```
-[v1 complete] [5:----] [6:----] [7:----] [8:----]
+[v1 complete] [5:1---] [6:----] [7:----] [8:----]
 ```
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: ~183 seconds (3 minutes)
-- Total execution time: ~0.46 hours
+- Total plans completed: 10
+- Average duration: ~179 seconds (3 minutes)
+- Total execution time: ~0.50 hours
 
 **By Phase:**
 
@@ -33,6 +33,7 @@ Last activity: 2026-02-18 — v2.0 roadmap created (Phases 5-8)
 | 02-connection-file-sync | 2 | 391s | 196s |
 | 03-diagnostic-skills-reporting | 4 | 689s | 172s |
 | 04-command-workflows | 2 | 319s | 160s |
+| 05-multi-source-connection | 1/2 | 264s | 264s |
 
 ## Accumulated Context
 
@@ -62,6 +63,10 @@ Recent decisions affecting current work:
 - v2.0: Table prefix read dynamically via wp config get, never hardcoded
 - v2.0: Content-based finding IDs (hash on type + path + code snippet) — not line-number-based
 - v2.0: Docker container identity confirmed by user before profile save; probe for wp-config.php to verify WP presence
+- v2.0: /connect source type detection order: git URL → local path → SSH user@host → ambiguous (ask user)
+- v2.0: Partial Docker bind mount (only subdirectory mounted) falls back to docker cp for WP root
+- v2.0: file_access field values: rsync (ssh), direct (local/git), bind_mount (docker with bind), docker_cp (docker without bind)
+- v2.0: Git reconnect asks before pull — never auto-pull on reconnect
 
 ### Pending Todos
 
@@ -69,11 +74,12 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 5 (Docker): Container WP path detection varies by image (official /var/www/html, Lando /app/public, custom varies). Probe sequence needs empirical validation against 2-3 real Docker setups before plan is written.
 - Phase 7 (Performance): wp package install for wp-cli/profile-command fails on shared hosting. Graceful degradation path (which checks skip, what user sees) must be specified before Phase 7 planning begins.
+
+Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 05-01 using 6 known paths + user fallback prompt.
 
 ## Session Continuity
 
-Last session: 2026-02-18 — v2.0 roadmap created
-Stopped at: Roadmap written, ready for Phase 5 planning
-Resume with: `/gsd:plan-phase 5`
+Last session: 2026-02-19 — 05-01 executed: /connect multi-source command
+Stopped at: Completed 05-multi-source-connection/05-01-PLAN.md
+Resume with: `/gsd:execute-phase 5` (05-02 next: /diagnose source-type gating)

@@ -66,13 +66,13 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 
 ### Multi-Source Access
 
-- [ ] **MSRC-01**: User can connect to a local WordPress directory without SSH
-- [ ] **MSRC-02**: User can connect to a WordPress site running in a Docker container
-- [ ] **MSRC-03**: User can clone a remote git repository containing WordPress code for analysis
-- [ ] **MSRC-04**: User can point at an already-cloned local git repository for analysis
-- [ ] **MSRC-05**: Plugin detects source type and routes commands through appropriate execution path (ssh/local/docker/git)
+- [x] **MSRC-01**: User can connect to a local WordPress directory without SSH
+- [x] **MSRC-02**: User can connect to a WordPress site running in a Docker container
+- [x] **MSRC-03**: User can clone a remote git repository containing WordPress code for analysis
+- [x] **MSRC-04**: User can point at an already-cloned local git repository for analysis
+- [x] **MSRC-05**: Plugin detects source type and routes commands through appropriate execution path (ssh/local/docker/git)
 - [ ] **MSRC-06**: Plugin restricts available skills based on source capabilities (e.g., no DB analysis for git-only sources without DB access)
-- [ ] **MSRC-07**: Sites.json stores source type per profile with backward-compatible default to SSH
+- [x] **MSRC-07**: Sites.json stores source type per profile with backward-compatible default to SSH
 
 ### Database Health
 
@@ -177,13 +177,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMDS-02 | Phase 4 | Complete |
 | CMDS-03 | Phase 4 | Complete |
 | CMDS-04 | Phase 4 | Complete |
-| MSRC-01 | Phase 5 | Pending |
-| MSRC-02 | Phase 5 | Pending |
-| MSRC-03 | Phase 5 | Pending |
-| MSRC-04 | Phase 5 | Pending |
-| MSRC-05 | Phase 5 | Pending |
+| MSRC-01 | Phase 5 | Complete |
+| MSRC-02 | Phase 5 | Complete |
+| MSRC-03 | Phase 5 | Complete |
+| MSRC-04 | Phase 5 | Complete |
+| MSRC-05 | Phase 5 | Complete |
 | MSRC-06 | Phase 5 | Pending |
-| MSRC-07 | Phase 5 | Pending |
+| MSRC-07 | Phase 5 | Complete |
 | DBHL-01 | Phase 6 | Pending |
 | DBHL-02 | Phase 6 | Pending |
 | DBHL-03 | Phase 6 | Pending |
