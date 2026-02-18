@@ -111,10 +111,11 @@ Plans:
   3. User can run /connect with a git repository URL and have it cloned to .sites/{name}/ and treated as a local directory for analysis
   4. An existing SSH profile continues to work without any modification (backward-compatible sites.json schema)
   5. Plugin declines DB-dependent skills for source types without DB access and explains why to the user
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 05-01-PLAN.md — Multi-source /connect: source type detection, local/Docker/git/SSH flows, sites.json schema extension
+- [ ] 05-02-PLAN.md — Capability gating: /connect summary, /diagnose resync + skill gating, /status source badges
 
 ### Phase 6: Database Health & Infrastructure Audits
 **Goal**: Users can analyze WordPress database health (autoload bloat, transients, revisions) and audit HTTPS/SSL configuration and file permissions
@@ -172,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Connection & File Sync | 2/2 | Complete | 2026-02-16 |
 | 3. Diagnostic Skills & Reporting | 4/4 | Complete | 2026-02-17 |
 | 4. Command Workflows | 0/2 | Planning complete | - |
-| 5. Multi-Source Connection | 0/? | Not started | - |
+| 5. Multi-Source Connection | 0/2 | Planning complete | - |
 | 6. Database Health & Infrastructure Audits | 0/? | Not started | - |
 | 7. Performance & Architecture | 0/? | Not started | - |
 | 8. Findings Trends & Batch Operations | 0/? | Not started | - |
