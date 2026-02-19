@@ -585,6 +585,47 @@ echo "Report saved: $LATEST"
 
 **If skills were skipped:** Pass "Incomplete" as scan status so health grade shows "Incomplete" instead of A-F. This avoids false confidence when data is missing.
 
+## Section 5.5: Trend Tracking (Post-Report)
+
+After the report is saved to `memory/{site}/latest.md`, invoke the trend-tracker skill to annotate badges and update trends.json. This step only runs if the report was generated successfully.
+
+### Invoke Trend Tracker
+
+Following `skills/trend-tracker/SKILL.md`:
+- Pass COMBINED_FINDINGS (the same JSON array built in Section 4)
+- Pass SITE_NAME (from Section 1 site resolution)
+- Pass HEALTH_GRADE (computed in Section 5 by report-generator)
+- Pass CRITICAL_TOTAL, WARNING_TOTAL, INFO_TOTAL (severity counts from Section 4)
+- Pass SKILLS_COMPLETED (count of skills that actually ran, not skipped)
+- Pass SKILLS_TOTAL (total skills attempted in this mode)
+- The trend-tracker reads memory/{site}/trends.json (if exists) and memory/{site}/latest.md
+- The trend-tracker writes updated memory/{site}/trends.json and patches latest.md with inline badges
+
+```bash
+echo "Updating trend history..."
+
+# Invoke the trend-tracker skill following skills/trend-tracker/SKILL.md
+# Pass all required context variables:
+#   COMBINED_FINDINGS  — JSON array from Section 4
+#   SITE_NAME          — from Section 1
+#   HEALTH_GRADE       — from Section 5
+#   CRITICAL_TOTAL     — from Section 5
+#   WARNING_TOTAL      — from Section 5
+#   INFO_TOTAL         — from Section 5
+#   SKILLS_COMPLETED   — count of skills that ran (not skipped)
+#   SKILLS_TOTAL       — total skills in the current mode's skill list
+
+# SKILLS_COMPLETED count from Section 4 tracking
+SKILLS_COMPLETED_COUNT="${#SKILLS_COMPLETED[@]}"
+SKILLS_TOTAL_COUNT="${#SKILLS[@]}"
+
+# (Implementation follows skills/trend-tracker/SKILL.md specification)
+
+echo "Trend data updated: memory/${SITE_NAME}/trends.json"
+```
+
+This section runs for ALL modes (full, security-only, code-only, performance) — trend tracking is mode-agnostic. The trends.json records whatever findings the current mode produced, enabling per-mode trend comparison across scans of the same type.
+
 ## Section 6: Completion Summary
 
 Display inline summary after report generation.
