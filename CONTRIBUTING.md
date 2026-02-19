@@ -53,7 +53,7 @@ This checks that your SKILL.md has proper frontmatter and that the skill is regi
 
 ## Skill Template
 
-```markdown
+````markdown
 ---
 name: diagnostic-example
 description: One-line description of what this skill checks
@@ -117,7 +117,7 @@ Each finding must include:
 - **Critical** — Active security risk, data loss potential, or site breakage
 - **Warning** — Suboptimal configuration that could cause problems
 - **Info** — Best practice suggestion or informational note
-```
+````
 
 ## Finding ID Format
 
