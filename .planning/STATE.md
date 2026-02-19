@@ -9,21 +9,21 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 7 (Performance & Architecture) — planned, ready for execution
-Plan: 5 plans in 2 waves (07-01 through 07-05)
-Status: Phase 7 planned and verified — ready for execution
-Last activity: 2026-02-19 — Phase 7 planned (5 skills: N+1, cron, profile, architecture, narrative)
+Phase: 7 (Performance & Architecture) — executing (4 of 5 plans complete)
+Plan: 07-04 complete — next: 07-05
+Status: Phase 7 executing — 4/5 plans done (N+1, cron, profile, architecture narrative)
+Last activity: 2026-02-19 — 07-04 complete (diagnostic-arch-narrative skill)
 
 ```
-[v1 complete] [5:done] [6:done] [7:----] [8:----]
+[v1 complete] [5:done] [6:done] [7:4/5] [8:----]
 ```
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: ~179 seconds (3 minutes)
-- Total execution time: ~0.50 hours
+- Total plans completed: 15
+- Average duration: ~174 seconds (3 minutes)
+- Total execution time: ~0.58 hours
 
 **By Phase:**
 
@@ -35,6 +35,7 @@ Last activity: 2026-02-19 — Phase 7 planned (5 skills: N+1, cron, profile, arc
 | 04-command-workflows | 2 | 319s | 160s |
 | 05-multi-source-connection | 2/2 | 442s | 221s |
 | 06-database-health-infrastructure-audits | 3/3 | 740s (06-01: 370s, 06-02: 249s, 06-03: ~120s) | ~247s |
+| 07-performance-architecture | 4/5 | ~548s (07-01: ~137s, 07-02: ~137s, 07-03: ~137s, 07-04: 137s) | ~137s |
 
 ## Accumulated Context
 
@@ -76,6 +77,10 @@ Recent decisions affecting current work:
 - v2.0: debug.log only flagged when WP_DEBUG=enabled AND file exists AND world-readable
 - v2.0: wp-config.php world-readable detection uses octal bit ops ($((8#$PERMS & 4))), not exact value match — catches 644, 755, 777 etc.
 - v2.0: Self-gating skill pattern — skills check own preconditions (source_type, WP_CLI_AVAILABLE, LOCAL_PATH) rather than relying on skill array
+- v2.0: Narrative output is bullet-point by domain (LOCKED) — not prose paragraphs; scales to any finding count
+- v2.0: diagnostic-arch-narrative produces exactly ONE finding (ARCH-NARR) — aggregator not a probe, reads COMBINED_FINDINGS only
+- v2.0: Top 3 ranking domain priority: Security > Database Health > Performance > Code Quality > Architecture > Infrastructure
+- v2.0: diagnostic-arch-narrative must run LAST in /diagnose full-mode skill list — COMBINED_FINDINGS must be complete
 
 ### Pending Todos
 
@@ -89,6 +94,6 @@ Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 
 
 ## Session Continuity
 
-Last session: 2026-02-19 — Phase 7 planned
-Stopped at: Phase 7 planning complete (5 plans, verification passed)
-Resume with: `/gsd:execute-phase 7`
+Last session: 2026-02-19 — Phase 7 plan 04 executed (diagnostic-arch-narrative skill)
+Stopped at: Completed 07-04-PLAN.md — diagnostic-arch-narrative SKILL.md created
+Resume with: `/gsd:execute-phase 7` (plan 05 remaining)
