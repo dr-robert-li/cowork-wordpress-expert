@@ -35,7 +35,8 @@ Last activity: 2026-02-19 — 07-04 complete (diagnostic-arch-narrative skill)
 | 04-command-workflows | 2 | 319s | 160s |
 | 05-multi-source-connection | 2/2 | 442s | 221s |
 | 06-database-health-infrastructure-audits | 3/3 | 740s (06-01: 370s, 06-02: 249s, 06-03: ~120s) | ~247s |
-| 07-performance-architecture | 4/5 | ~548s (07-01: ~137s, 07-02: ~137s, 07-03: ~137s, 07-04: 137s) | ~137s |
+| 07-performance-architecture | 4/5 | ~771s (07-01: ~137s, 07-02: ~137s, 07-03: 223s, 07-04: 137s) | ~193s |
+| Phase 07-performance-architecture P02 | 285 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,11 @@ Recent decisions affecting current work:
 - v2.0: diagnostic-arch-narrative produces exactly ONE finding (ARCH-NARR) — aggregator not a probe, reads COMBINED_FINDINGS only
 - v2.0: Top 3 ranking domain priority: Security > Database Health > Performance > Code Quality > Architecture > Infrastructure
 - v2.0: diagnostic-arch-narrative must run LAST in /diagnose full-mode skill list — COMBINED_FINDINGS must be complete
+- v2.0: diagnostic-architecture is NOT in WP_CLI_SKILLS array — self-gating with partial results (Part A skip finding + Parts B+C continue)
+- v2.0: CPT misuse thresholds — 0 posts = Warning (dead CPT), 1-5 = Info (possibly orphaned), >10000 = Warning (data-store misuse)
+- v2.0: Hook abuse callback threshold — >=20 registrations = Warning, 10-19 = Info, per hook name across all custom code
+- v2.0: Heuristic findings (ARCH-CACHE-DB) use Info severity — uncached DB queries may be intentional, require AI context review
+- v2.0: Object cache fallback — when WP-CLI unavailable, check for wp-content/object-cache.php drop-in file
 
 ### Pending Todos
 
@@ -94,6 +100,6 @@ Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 
 
 ## Session Continuity
 
-Last session: 2026-02-19 — Phase 7 plan 04 executed (diagnostic-arch-narrative skill)
-Stopped at: Completed 07-04-PLAN.md — diagnostic-arch-narrative SKILL.md created
-Resume with: `/gsd:execute-phase 7` (plan 05 remaining)
+Last session: 2026-02-19 — Phase 7 plan 02 completed (SUMMARY.md created; skill commits 97b14ec and 31ee7b2 confirmed)
+Stopped at: Completed 07-02-PLAN.md — diagnostic-cron-analysis and diagnostic-wpcli-profile SKILL.md created, SUMMARY.md written
+Resume with: `/gsd:execute-phase 7` (plan 07-05 is the only remaining plan)

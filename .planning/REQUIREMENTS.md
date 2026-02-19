@@ -95,8 +95,8 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 
 ### Architecture Review
 
-- [ ] **ARCH-01**: User can detect CPT misuse patterns (excessive post types, misuse as data store with DB row-count gating)
-- [ ] **ARCH-02**: User can detect hook abuse patterns (excessive actions/filters, priority conflicts)
+- [x] **ARCH-01**: User can detect CPT misuse patterns (excessive post types, misuse as data store with DB row-count gating)
+- [x] **ARCH-02**: User can detect hook abuse patterns (excessive actions/filters, priority conflicts)
 - [x] **ARCH-03**: Plugin produces AI-synthesized architecture narrative summarizing structural health
 
 ### Findings Trends
@@ -194,8 +194,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-01 | Phase 7 | Complete |
 | PERF-02 | Phase 7 | Pending |
 | PERF-03 | Phase 7 | Pending |
-| ARCH-01 | Phase 7 | Pending |
-| ARCH-02 | Phase 7 | Pending |
+| ARCH-01 | Phase 7 | Complete |
+| ARCH-02 | Phase 7 | Complete |
 | ARCH-03 | Phase 7 | Complete |
 | TRND-01 | Phase 8 | Pending |
 | TRND-02 | Phase 8 | Pending |
