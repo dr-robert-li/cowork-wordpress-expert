@@ -166,7 +166,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Trend tracker skill + /diagnose integration (trend classification, inline badges, trends.json)
+- [x] 08-01-PLAN.md — Trend tracker skill + /diagnose integration (trend classification, inline badges, trends.json)
 - [ ] 08-02-PLAN.md — /batch command with multi-site diagnostics and comparison matrix
 
 ## Progress

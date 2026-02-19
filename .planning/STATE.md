@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 7 (Performance & Architecture) — complete (5 of 5 plans complete)
-Plan: 07-05 complete — Phase 7 done
-Status: Phase 7 complete — all 5 plans done (N+1, cron, profile, architecture, diagnose registration)
-Last activity: 2026-02-19 — 07-05 complete (/diagnose command updated with all 16 skills)
+Phase: 8 (Findings, Trends & Batch Operations) — in progress (1 of 2 plans complete)
+Plan: 08-01 complete — trend-tracker skill created and integrated into /diagnose
+Status: Phase 8 in progress — plan 01 done (trend-tracker), plan 02 pending (comparison matrix)
+Last activity: 2026-02-19 — 08-01 complete (trend-tracker skill, /diagnose Section 5.5 added)
 
 ```
-[v1 complete] [5:done] [6:done] [7:done] [8:----]
+[v1 complete] [5:done] [6:done] [7:done] [8:1/2--]
 ```
 
 ## Performance Metrics
@@ -36,6 +36,7 @@ Last activity: 2026-02-19 — 07-05 complete (/diagnose command updated with all
 | 05-multi-source-connection | 2/2 | 442s | 221s |
 | 06-database-health-infrastructure-audits | 3/3 | 740s (06-01: 370s, 06-02: 249s, 06-03: ~120s) | ~247s |
 | 07-performance-architecture | 5/5 | ~887s (07-01: ~137s, 07-02: ~137s, 07-03: 223s, 07-04: 137s, 07-05: 116s) | ~177s |
+| 08-findings-trends-batch-operations | 1/2 | 222s (08-01: 222s) | ~222s |
 
 ## Accumulated Context
 
@@ -86,6 +87,11 @@ Recent decisions affecting current work:
 - v2.0: Hook abuse callback threshold — >=20 registrations = Warning, 10-19 = Info, per hook name across all custom code
 - v2.0: Heuristic findings (ARCH-CACHE-DB) use Info severity — uncached DB queries may be intentional, require AI context review
 - v2.0: Object cache fallback — when WP-CLI unavailable, check for wp-content/object-cache.php drop-in file
+- v2.0: Trend tracker runs as post-report aggregator — never before report-generator writes latest.md (sequencing enforced in /diagnose Section 5.5)
+- v2.0: 2-scan retention policy for trends.json (current + prior) — sufficient for NEW/RECURRING classification at low storage cost
+- v2.0: REGRESSION classification not implemented — 2-scan retention cannot detect reappeared findings (known limitation, shown as NEW)
+- v2.0: Fuzzy match (finding_type + file_path) used as fallback for cross-scan ID matching — catches reformatted code
+- v2.0: Trend tracking is mode-agnostic — runs for all /diagnose modes (full, security-only, code-only, performance)
 
 ### Pending Todos
 
@@ -99,6 +105,6 @@ Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 
 
 ## Session Continuity
 
-Last session: 2026-02-19 — Phase 7 plan 05 completed (all 5 Phase 7 skills registered in /diagnose, performance mode added)
-Stopped at: Completed 07-05-PLAN.md — /diagnose updated with 16 skills, performance mode, extended WP_CLI_SKILLS
-Resume with: Phase 7 complete — begin Phase 8 when ready
+Last session: 2026-02-19 — Phase 8 plan 01 completed (trend-tracker skill + /diagnose Section 5.5)
+Stopped at: Completed 08-01-PLAN.md — trend-tracker created, /diagnose updated with Section 5.5 trend tracking
+Resume with: Phase 8 plan 02 — comparison matrix (grade/count trends using trends.json)

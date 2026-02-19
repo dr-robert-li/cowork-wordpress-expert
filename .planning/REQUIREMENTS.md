@@ -101,9 +101,9 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 
 ### Findings Trends
 
-- [ ] **TRND-01**: Plugin uses content-based finding IDs (not line-number-based) for stable cross-scan tracking
-- [ ] **TRND-02**: User can view delta report showing new, resolved, and recurring findings between audits
-- [ ] **TRND-03**: Plugin stores trend data in machine-readable format alongside existing case history
+- [x] **TRND-01**: Plugin uses content-based finding IDs (not line-number-based) for stable cross-scan tracking
+- [x] **TRND-02**: User can view delta report showing new, resolved, and recurring findings between audits
+- [x] **TRND-03**: Plugin stores trend data in machine-readable format alongside existing case history
 
 ### Batch Operations
 
@@ -197,9 +197,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-01 | Phase 7 | Complete |
 | ARCH-02 | Phase 7 | Complete |
 | ARCH-03 | Phase 7 | Complete |
-| TRND-01 | Phase 8 | Pending |
-| TRND-02 | Phase 8 | Pending |
-| TRND-03 | Phase 8 | Pending |
+| TRND-01 | Phase 8 | Complete |
+| TRND-02 | Phase 8 | Complete |
+| TRND-03 | Phase 8 | Complete |
 | BTCH-01 | Phase 8 | Pending |
 | BTCH-02 | Phase 8 | Pending |
 
