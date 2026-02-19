@@ -90,8 +90,8 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 ### Performance Detection
 
 - [x] **PERF-01**: User can detect potential N+1 query patterns in theme/plugin code with confidence tiers (high/medium/low)
-- [ ] **PERF-02**: User can analyze wp-cron scheduled events for issues (overdue, duplicate, excessive frequency)
-- [ ] **PERF-03**: Plugin integrates WP-CLI Profile command for runtime performance data (with graceful degradation when unavailable)
+- [x] **PERF-02**: User can analyze wp-cron scheduled events for issues (overdue, duplicate, excessive frequency)
+- [x] **PERF-03**: Plugin integrates WP-CLI Profile command for runtime performance data (with graceful degradation when unavailable)
 
 ### Architecture Review
 
@@ -192,8 +192,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFR-01 | Phase 6 | Complete |
 | INFR-02 | Phase 6 | Complete |
 | PERF-01 | Phase 7 | Complete |
-| PERF-02 | Phase 7 | Pending |
-| PERF-03 | Phase 7 | Pending |
+| PERF-02 | Phase 7 | Complete |
+| PERF-03 | Phase 7 | Complete |
 | ARCH-01 | Phase 7 | Complete |
 | ARCH-02 | Phase 7 | Complete |
 | ARCH-03 | Phase 7 | Complete |
