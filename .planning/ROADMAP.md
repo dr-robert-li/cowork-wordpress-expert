@@ -163,10 +163,11 @@ Plans:
   3. Trend data is stored in machine-readable trends.json alongside case history so it can be queried programmatically
   4. User can invoke a batch command that runs diagnostics across all saved profiles sequentially with a per-site status line
   5. User can view a comparison matrix of findings across sites, sorted by health grade, showing critical/warning/info counts per site
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 08-01-PLAN.md — Trend tracker skill + /diagnose integration (trend classification, inline badges, trends.json)
+- [ ] 08-02-PLAN.md — /batch command with multi-site diagnostics and comparison matrix
 
 ## Progress
 
@@ -182,4 +183,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Multi-Source Connection | 2/2 | Complete   | 2026-02-18 |
 | 6. Database Health & Infrastructure Audits | 3/3 | Complete   | 2026-02-18 |
 | 7. Performance & Architecture | 5/5 | Complete   | 2026-02-19 |
-| 8. Findings Trends & Batch Operations | 0/? | Not started | - |
+| 8. Findings Trends & Batch Operations | 0/2 | Planning complete | - |
