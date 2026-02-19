@@ -619,6 +619,10 @@ echo "Updating trend history..."
 SKILLS_COMPLETED_COUNT="${#SKILLS_COMPLETED[@]}"
 SKILLS_TOTAL_COUNT="${#SKILLS[@]}"
 
+# Re-assign as scalars for trend-tracker (expects SKILLS_COMPLETED and SKILLS_TOTAL as integers)
+SKILLS_COMPLETED="${SKILLS_COMPLETED_COUNT}"
+SKILLS_TOTAL="${SKILLS_TOTAL_COUNT}"
+
 # (Implementation follows skills/trend-tracker/SKILL.md specification)
 
 echo "Trend data updated: memory/${SITE_NAME}/trends.json"
