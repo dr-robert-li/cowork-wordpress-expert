@@ -1,16 +1,17 @@
 ---
 name: diagnose
-description: Run diagnostic suite on a WordPress site with full, security-only, or code-only modes
+description: Run diagnostic suite on a WordPress site with full, security-only, code-only, or performance modes
 usage: /diagnose [mode] [on site-name]
 modes:
-  - full (default): All 11 diagnostic skills
+  - full (default): All 16 diagnostic skills
   - security-only: core-integrity, config-security, user-audit
   - code-only: code-quality, malware-scan
+  - performance: performance-n1, cron-analysis, wpcli-profile
 ---
 
 # Diagnose Command
 
-Run a comprehensive diagnostic suite on a WordPress site with three modes: full (default), security-only, or code-only. The command orchestrates all diagnostic skills, displays inline progress with finding counts, handles errors gracefully with skip-and-continue recovery, and produces structured reports with health grades (A-F).
+Run a comprehensive diagnostic suite on a WordPress site with four modes: full (default), security-only, code-only, or performance. The command orchestrates all diagnostic skills, displays inline progress with finding counts, handles errors gracefully with skip-and-continue recovery, and produces structured reports with health grades (A-F).
 
 ## Section 1: Natural Language Argument Parsing
 
@@ -29,15 +30,18 @@ if echo "$USER_INPUT" | grep -qE "(security|audit|security only|just security|se
   MODE="security-only"
 elif echo "$USER_INPUT" | grep -qE "(code|quality|code only|just code|code-only)"; then
   MODE="code-only"
+elif echo "$USER_INPUT" | grep -qE "(performance|perf|n\+1|n1|cron|profile)"; then
+  MODE="performance"
 else
   MODE="full"
 fi
 ```
 
 **Mode mappings:**
-- **full (default):** Runs all 11 diagnostic skills (core-integrity, config-security, user-audit, version-audit, malware-scan, code-quality, db-autoload, db-transients, db-revisions, https-audit, file-permissions)
+- **full (default):** Runs all 16 diagnostic skills (core-integrity, config-security, user-audit, version-audit, malware-scan, code-quality, db-autoload, db-transients, db-revisions, https-audit, file-permissions, performance-n1, cron-analysis, wpcli-profile, architecture, arch-narrative)
 - **security-only:** Runs security-focused skills only (core-integrity, config-security, user-audit)
 - **code-only:** Runs code-quality skills only (code-quality, malware-scan)
+- **performance:** Runs performance-focused skills (performance-n1, cron-analysis, wpcli-profile)
 
 ### Site Name Extraction
 
@@ -60,7 +64,7 @@ if [ -z "$SITE_NAME" ]; then
   jq -r '.sites | keys[]' sites.json 2>/dev/null
   echo ""
   echo "Usage: /diagnose [mode] on {site-name}"
-  echo "Modes: full (default), security-only, code-only"
+  echo "Modes: full (default), security-only, code-only, performance"
   exit 1
 fi
 ```
@@ -264,6 +268,13 @@ case $MODE in
       "diagnostic-malware-scan:Malware Scan"
     )
     ;;
+  "performance")
+    SKILLS=(
+      "diagnostic-performance-n1:N+1 Query Pattern Detection"
+      "diagnostic-cron-analysis:Cron Event Analysis"
+      "diagnostic-wpcli-profile:WP-CLI Profile Analysis"
+    )
+    ;;
   "full")
     SKILLS=(
       "diagnostic-core-integrity:Core Integrity Check"
@@ -277,6 +288,11 @@ case $MODE in
       "diagnostic-db-revisions:Post Revision Analysis"
       "diagnostic-https-audit:HTTPS Configuration Audit"
       "diagnostic-file-permissions:File Permission Check"
+      "diagnostic-performance-n1:N+1 Query Pattern Detection"
+      "diagnostic-cron-analysis:Cron Event Analysis"
+      "diagnostic-wpcli-profile:WP-CLI Profile Analysis"
+      "diagnostic-architecture:Architecture Review"
+      "diagnostic-arch-narrative:Synthesized Narrative"
     )
     ;;
 esac
@@ -295,6 +311,8 @@ WP_CLI_SKILLS=(
   "diagnostic-db-autoload"
   "diagnostic-db-transients"
   "diagnostic-db-revisions"
+  "diagnostic-cron-analysis"
+  "diagnostic-wpcli-profile"
 )
 
 # Check if WP-CLI is available
@@ -305,20 +323,20 @@ if [ "$WP_CLI_PATH" == "null" ] || [ -z "$WP_CLI_PATH" ]; then
   case "$SOURCE_TYPE" in
     "git")
       echo "Note: WP-CLI skills unavailable — git source has no live WordPress database."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions, cron-analysis, wpcli-profile) will be skipped."
       ;;
     "local")
       echo "Note: WP-CLI not found locally. Install from https://wp-cli.org to enable database diagnostics."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions, cron-analysis, wpcli-profile) will be skipped."
       ;;
     "docker")
       echo "Note: WP-CLI not found in container. Install WP-CLI inside the container to enable database diagnostics."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions, cron-analysis, wpcli-profile) will be skipped."
       ;;
     *)
       # ssh (or legacy profiles without source_type)
       echo "Note: WP-CLI not available on remote server."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions, cron-analysis, wpcli-profile) will be skipped."
       ;;
   esac
   echo ""
@@ -345,7 +363,7 @@ else
       # even if WP-CLI binary is present locally
       WP_CLI_AVAILABLE=false
       echo "Note: WP-CLI DB skills unavailable — git source has no live WordPress database."
-      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions) will be skipped."
+      echo "WP-CLI-dependent skills (core-integrity, user-audit, version-audit, db-autoload, db-transients, db-revisions, cron-analysis, wpcli-profile) will be skipped."
       echo ""
       ;;
   esac
@@ -798,8 +816,8 @@ fi
 
 The /diagnose command is successful when:
 
-- User can invoke with natural language: "/diagnose", "/diagnose security only", "/diagnose code only on mysite"
-- All three modes work correctly (full, security-only, code-only)
+- User can invoke with natural language: "/diagnose", "/diagnose security only", "/diagnose code only on mysite", "/diagnose performance"
+- All four modes work correctly (full, security-only, code-only, performance)
 - Inline progress shows each skill running with finding counts
 - Critical findings appear immediately as discovered (not just at the end)
 - Skip-and-continue error recovery prevents one failure from aborting entire scan
