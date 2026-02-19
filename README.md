@@ -1,4 +1,4 @@
-# WordPress Expert
+# Claude Code the WordPress Expert
 
 ![Version](https://img.shields.io/badge/version-2.2.0-blue)
 ![Skills](https://img.shields.io/badge/skills-21-green)
