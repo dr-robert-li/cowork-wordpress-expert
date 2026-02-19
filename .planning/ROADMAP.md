@@ -181,10 +181,10 @@ Plans:
   3. plugin.json diagnose description includes "performance" mode
   4. /status Available Commands footer includes "performance" in diagnose modes
   5. MSRC-06 marked Complete in REQUIREMENTS.md traceability table
-**Plans:** TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD
+- [ ] 09-01-PLAN.md — Fix skill_coverage variable mismatch, add 11 missing skills to plugin.json, update diagnose/status descriptions
 
 ## Progress
 
