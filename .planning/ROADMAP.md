@@ -30,6 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Database Health & Infrastructure Audits** - DB optimization analysis, HTTPS/SSL, and file permissions (completed 2026-02-18)
 - [x] **Phase 7: Performance & Architecture** - N+1 pattern detection, cron analysis, CPT/hook abuse review (completed 2026-02-19)
 - [x] **Phase 8: Findings Trends & Batch Operations** - Cross-scan trend tracking and multi-site batch diagnostics (completed 2026-02-19)
+- [ ] **Phase 9: Audit Cleanup** - Fix integration bug, update plugin manifest, close documentation gaps from v2.0 audit
 
 ## Phase Details
 
@@ -169,10 +170,26 @@ Plans:
 - [x] 08-01-PLAN.md — Trend tracker skill + /diagnose integration (trend classification, inline badges, trends.json)
 - [x] 08-02-PLAN.md — /batch command with multi-site diagnostics and comparison matrix
 
+### Phase 9: Audit Cleanup
+**Goal**: Fix integration wiring bug, update plugin manifest with all v2.0 skills, and close documentation gaps identified by milestone audit
+**Depends on**: Phase 8
+**Requirements**: None (gap closure phase — all requirements already satisfied)
+**Gap Closure**: Closes gaps from v2.0-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. skill_coverage variable in /diagnose Section 5.5 correctly passes scalar counts to trend-tracker
+  2. plugin.json skills manifest lists all 21 skills (10 from v1 + 11 from v2)
+  3. plugin.json diagnose description includes "performance" mode
+  4. /status Available Commands footer includes "performance" in diagnose modes
+  5. MSRC-06 marked Complete in REQUIREMENTS.md traceability table
+**Plans:** TBD
+
+Plans:
+- [ ] TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -184,3 +201,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 6. Database Health & Infrastructure Audits | 3/3 | Complete   | 2026-02-18 |
 | 7. Performance & Architecture | 5/5 | Complete   | 2026-02-19 |
 | 8. Findings Trends & Batch Operations | 2/2 | Complete | 2026-02-19 |
+| 9. Audit Cleanup | 0/1 | Not started | - |

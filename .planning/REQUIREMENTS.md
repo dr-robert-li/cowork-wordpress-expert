@@ -71,7 +71,7 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 - [x] **MSRC-03**: User can clone a remote git repository containing WordPress code for analysis
 - [x] **MSRC-04**: User can point at an already-cloned local git repository for analysis
 - [x] **MSRC-05**: Plugin detects source type and routes commands through appropriate execution path (ssh/local/docker/git)
-- [ ] **MSRC-06**: Plugin restricts available skills based on source capabilities (e.g., no DB analysis for git-only sources without DB access)
+- [x] **MSRC-06**: Plugin restricts available skills based on source capabilities (e.g., no DB analysis for git-only sources without DB access)
 - [x] **MSRC-07**: Sites.json stores source type per profile with backward-compatible default to SSH
 
 ### Database Health
@@ -182,7 +182,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MSRC-03 | Phase 5 | Complete |
 | MSRC-04 | Phase 5 | Complete |
 | MSRC-05 | Phase 5 | Complete |
-| MSRC-06 | Phase 5 | Pending |
+| MSRC-06 | Phase 5 | Complete |
 | MSRC-07 | Phase 5 | Complete |
 | DBHL-01 | Phase 6 | Complete |
 | DBHL-02 | Phase 6 | Complete |
