@@ -144,10 +144,14 @@ Plans:
   3. When WP-CLI Profile is available, user receives actual hook and stage timing data; when unavailable, skipped checks are listed explicitly (not a generic error)
   4. User receives an architecture report identifying CPT misuse (gated on actual DB row counts), hook abuse patterns, and caching anti-patterns
   5. User receives a synthesized narrative summarizing the site's structural health across code, database, and performance findings
-**Plans**: TBD
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD
+- [ ] 07-01-PLAN.md — N+1 query pattern detection skill (diagnostic-performance-n1)
+- [ ] 07-02-PLAN.md — Cron analysis skill + WP-CLI Profile skill (diagnostic-cron-analysis, diagnostic-wpcli-profile)
+- [ ] 07-03-PLAN.md — Architecture review skill: CPT misuse, hook abuse, caching anti-patterns (diagnostic-architecture)
+- [ ] 07-04-PLAN.md — Synthesized narrative skill (diagnostic-arch-narrative)
+- [ ] 07-05-PLAN.md — Register all Phase 7 skills in /diagnose command, add performance mode
 
 ### Phase 8: Findings Trends & Batch Operations
 **Goal**: Users can track whether site health is improving or degrading over time, and run diagnostics across multiple saved profiles in a single operation
@@ -177,5 +181,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Command Workflows | 0/2 | Planning complete | - |
 | 5. Multi-Source Connection | 2/2 | Complete   | 2026-02-18 |
 | 6. Database Health & Infrastructure Audits | 3/3 | Complete   | 2026-02-18 |
-| 7. Performance & Architecture | 0/? | Not started | - |
+| 7. Performance & Architecture | 0/5 | Planning complete | - |
 | 8. Findings Trends & Batch Operations | 0/? | Not started | - |
