@@ -107,8 +107,8 @@ Requirements for milestone v2.0. Each maps to roadmap phases.
 
 ### Batch Operations
 
-- [ ] **BTCH-01**: User can run diagnostics across multiple saved site profiles sequentially
-- [ ] **BTCH-02**: User can view comparison matrix of findings across sites (health grades, finding counts, sorted by health)
+- [x] **BTCH-01**: User can run diagnostics across multiple saved site profiles sequentially
+- [x] **BTCH-02**: User can view comparison matrix of findings across sites (health grades, finding counts, sorted by health)
 
 ## Future Requirements
 
@@ -200,8 +200,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRND-01 | Phase 8 | Complete |
 | TRND-02 | Phase 8 | Complete |
 | TRND-03 | Phase 8 | Complete |
-| BTCH-01 | Phase 8 | Pending |
-| BTCH-02 | Phase 8 | Pending |
+| BTCH-01 | Phase 8 | Complete |
+| BTCH-02 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 32 total (all complete)

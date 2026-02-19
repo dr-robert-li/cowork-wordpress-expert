@@ -9,21 +9,21 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 8 (Findings, Trends & Batch Operations) — in progress (1 of 2 plans complete)
-Plan: 08-01 complete — trend-tracker skill created and integrated into /diagnose
-Status: Phase 8 in progress — plan 01 done (trend-tracker), plan 02 pending (comparison matrix)
-Last activity: 2026-02-19 — 08-01 complete (trend-tracker skill, /diagnose Section 5.5 added)
+Phase: 8 (Findings, Trends & Batch Operations) — complete (2 of 2 plans complete)
+Plan: 08-02 complete — /batch command with multi-site diagnostics and comparison matrix
+Status: Phase 8 complete — all plans done (trend-tracker + batch command)
+Last activity: 2026-02-19 — 08-02 complete (/batch command, plugin manifest, /status updated)
 
 ```
-[v1 complete] [5:done] [6:done] [7:done] [8:1/2--]
+[v1 complete] [5:done] [6:done] [7:done] [8:done]
 ```
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: ~174 seconds (3 minutes)
-- Total execution time: ~0.58 hours
+- Total execution time: ~0.61 hours
 
 **By Phase:**
 
@@ -36,7 +36,7 @@ Last activity: 2026-02-19 — 08-01 complete (trend-tracker skill, /diagnose Sec
 | 05-multi-source-connection | 2/2 | 442s | 221s |
 | 06-database-health-infrastructure-audits | 3/3 | 740s (06-01: 370s, 06-02: 249s, 06-03: ~120s) | ~247s |
 | 07-performance-architecture | 5/5 | ~887s (07-01: ~137s, 07-02: ~137s, 07-03: 223s, 07-04: 137s, 07-05: 116s) | ~177s |
-| 08-findings-trends-batch-operations | 1/2 | 222s (08-01: 222s) | ~222s |
+| 08-findings-trends-batch-operations | 2/2 | 398s (08-01: 222s, 08-02: 176s) | ~199s |
 
 ## Accumulated Context
 
@@ -92,6 +92,9 @@ Recent decisions affecting current work:
 - v2.0: REGRESSION classification not implemented — 2-scan retention cannot detect reappeared findings (known limitation, shown as NEW)
 - v2.0: Fuzzy match (finding_type + file_path) used as fallback for cross-scan ID matching — catches reformatted code
 - v2.0: Trend tracking is mode-agnostic — runs for all /diagnose modes (full, security-only, code-only, performance)
+- v2.0: /batch comparison matrix sorted worst-first using grade sort key (F=0, D=1, C=2, B=3, A=4, Incomplete=5, ERR=9)
+- v2.0: ERR grade shown in matrix for failed sites — no silent data loss; batch continues to next site
+- v2.0: /batch reads from trends.json (not reports) — consistent data source, avoids re-parsing markdown
 
 ### Pending Todos
 
@@ -105,6 +108,6 @@ Note: Phase 5 Docker WP path blocker resolved — probe sequence implemented in 
 
 ## Session Continuity
 
-Last session: 2026-02-19 — Phase 8 plan 01 completed (trend-tracker skill + /diagnose Section 5.5)
-Stopped at: Completed 08-01-PLAN.md — trend-tracker created, /diagnose updated with Section 5.5 trend tracking
-Resume with: Phase 8 plan 02 — comparison matrix (grade/count trends using trends.json)
+Last session: 2026-02-19 — Phase 8 complete (plan 02: /batch command with comparison matrix)
+Stopped at: Completed 08-02-PLAN.md — /batch command created, plugin manifest and /status updated
+Resume with: Next phase planning (Phase 8 complete)
