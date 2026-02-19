@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Multi-Source Connection** - Local, Docker, and git access modes alongside existing SSH (completed 2026-02-18)
 - [x] **Phase 6: Database Health & Infrastructure Audits** - DB optimization analysis, HTTPS/SSL, and file permissions (completed 2026-02-18)
 - [x] **Phase 7: Performance & Architecture** - N+1 pattern detection, cron analysis, CPT/hook abuse review (completed 2026-02-19)
-- [ ] **Phase 8: Findings Trends & Batch Operations** - Cross-scan trend tracking and multi-site batch diagnostics
+- [x] **Phase 8: Findings Trends & Batch Operations** - Cross-scan trend tracking and multi-site batch diagnostics (completed 2026-02-19)
 
 ## Phase Details
 
@@ -167,7 +167,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Trend tracker skill + /diagnose integration (trend classification, inline badges, trends.json)
-- [ ] 08-02-PLAN.md — /batch command with multi-site diagnostics and comparison matrix
+- [x] 08-02-PLAN.md — /batch command with multi-site diagnostics and comparison matrix
 
 ## Progress
 
@@ -183,4 +183,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Multi-Source Connection | 2/2 | Complete   | 2026-02-18 |
 | 6. Database Health & Infrastructure Audits | 3/3 | Complete   | 2026-02-18 |
 | 7. Performance & Architecture | 5/5 | Complete   | 2026-02-19 |
-| 8. Findings Trends & Batch Operations | 0/2 | Planning complete | - |
+| 8. Findings Trends & Batch Operations | 2/2 | Complete | 2026-02-19 |
