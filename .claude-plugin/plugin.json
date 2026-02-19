@@ -1,6 +1,6 @@
 {
   "name": "wordpress-expert",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Expert WordPress diagnostics: structured investigations with intake questioning, site reconnaissance, parallel execution, and findings verification.",
   "author": {
     "name": "Robert Li"
@@ -110,6 +110,38 @@
     },
     "trend-tracker": {
       "description": "Cross-scan trend tracking with NEW/RESOLVED/RECURRING classification and inline report badges",
+      "status": "implemented"
+    },
+    "accessibility": {
+      "description": "WCAG compliance and data privacy requirements evaluation for WordPress sites",
+      "status": "implemented"
+    },
+    "code-quality": {
+      "description": "WordPress Coding Standards review, static analysis, architecture patterns, and error handling",
+      "status": "implemented"
+    },
+    "performance": {
+      "description": "WordPress performance analysis across database queries, PHP execution, frontend rendering, and caching",
+      "status": "implemented"
+    },
+    "plugin-conflicts": {
+      "description": "Plugin and theme conflict identification — hook collisions, JavaScript/CSS conflicts, binary search isolation",
+      "status": "implemented"
+    },
+    "reporting": {
+      "description": "Diagnostic findings structuring for technical and non-technical audiences with severity ratings and action logging",
+      "status": "implemented"
+    },
+    "security-analysis": {
+      "description": "OWASP Top 10 and WordPress-specific vulnerability pattern evaluation for code security auditing",
+      "status": "implemented"
+    },
+    "testing": {
+      "description": "WordPress testing strategy guidance — PHPUnit, WP_UnitTestCase, test categories, and coverage targets",
+      "status": "implemented"
+    },
+    "wp-patterns": {
+      "description": "WordPress architecture pattern review — theme structure, plugin design, data modeling, integration patterns",
       "status": "implemented"
     }
   }

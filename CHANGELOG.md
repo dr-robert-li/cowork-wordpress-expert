@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-02-19
+
+### Added
+
+- Multi-source connection support in `/connect`
+  - Local directory connections (`/connect /var/www/wordpress`)
+  - Docker container connections (`/connect docker:container-name`)
+  - Git repository connections (`/connect git:repo-url`)
+- `/batch` command for running diagnostics across multiple saved site profiles
+  - Sequential per-site execution with status lines
+  - Side-by-side comparison matrix of findings across sites
+- Database health diagnostic skills
+  - `diagnostic-db-autoload` — autoloaded option bloat detection and plugin attribution
+  - `diagnostic-db-transients` — expired transient buildup and cleanup recommendations
+  - `diagnostic-db-revisions` — post revision analysis by type with storage impact estimates
+- Infrastructure audit skills
+  - `diagnostic-https-audit` — SSL configuration, FORCE_SSL_ADMIN, mixed content indicators
+  - `diagnostic-file-permissions` — file and directory permissions against WP recommendations
+- Performance diagnostic skills
+  - `diagnostic-performance-n1` — N+1 query pattern detection with confidence ratings
+  - `diagnostic-cron-analysis` — overdue, duplicate, and excessively-frequent cron jobs
+  - `diagnostic-wpcli-profile` — WP-CLI stage and hook timing for bottleneck identification
+- Architecture review skills
+  - `diagnostic-architecture` — CPT misuse, hook abuse patterns, caching anti-patterns
+  - `diagnostic-arch-narrative` — AI-synthesized architectural health narrative
+- Cross-scan trend tracking via `trend-tracker` skill
+  - NEW/RESOLVED/RECURRING finding classification
+  - Inline trend badges in diagnostic reports
+- Performance diagnose mode (`/diagnose performance`)
+- `CONTRIBUTING.md` with skill contribution guide and template
+- `STANDARDS.md` with coding standards for the plugin
+- `tests/validate-plugin.sh` for plugin structure validation
+- GitHub Actions CI workflow
+
 ## [2.1.0] - 2026-02-18
 
 ### Added

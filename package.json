@@ -1,7 +1,10 @@
 {
   "name": "wpxpert",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "WordPress diagnostics expert for Claude Code — structured investigations with intake, reconnaissance, parallel execution, and verification",
+  "scripts": {
+    "test": "bash tests/validate-plugin.sh"
+  },
   "author": "Robert Li",
   "license": "MIT",
   "bin": {
