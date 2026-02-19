@@ -15,7 +15,7 @@
       "status": "implemented"
     },
     "diagnose": {
-      "description": "Run diagnostic suite with full, security-only, or code-only modes on connected WordPress sites",
+      "description": "Run diagnostic suite with full, security-only, code-only, or performance modes on connected WordPress sites",
       "status": "implemented"
     },
     "investigate": {
@@ -66,6 +66,50 @@
     },
     "scan-reviewer": {
       "description": "Post-diagnostic verification — checks findings address the original concern and are internally consistent",
+      "status": "implemented"
+    },
+    "diagnostic-db-autoload": {
+      "description": "WordPress autoload option analysis for bloat detection and plugin attribution",
+      "status": "implemented"
+    },
+    "diagnostic-db-transients": {
+      "description": "Transient health analysis for expired buildup and cleanup threshold recommendations",
+      "status": "implemented"
+    },
+    "diagnostic-db-revisions": {
+      "description": "Post revision analysis by type with storage impact and revision limit recommendations",
+      "status": "implemented"
+    },
+    "diagnostic-https-audit": {
+      "description": "HTTPS/SSL configuration audit for siteurl scheme, FORCE_SSL_ADMIN, and mixed content indicators",
+      "status": "implemented"
+    },
+    "diagnostic-file-permissions": {
+      "description": "File and directory permission audit against WordPress security recommendations",
+      "status": "implemented"
+    },
+    "diagnostic-performance-n1": {
+      "description": "N+1 query pattern detection in theme and plugin code with confidence ratings",
+      "status": "implemented"
+    },
+    "diagnostic-cron-analysis": {
+      "description": "WP-Cron event analysis for overdue, duplicate, and excessively-frequent scheduled jobs",
+      "status": "implemented"
+    },
+    "diagnostic-wpcli-profile": {
+      "description": "WP-CLI Profile stage and hook timing analysis for performance bottleneck identification",
+      "status": "implemented"
+    },
+    "diagnostic-architecture": {
+      "description": "Architecture review for CPT misuse, hook abuse patterns, and caching anti-patterns",
+      "status": "implemented"
+    },
+    "diagnostic-arch-narrative": {
+      "description": "AI-synthesized architectural health narrative aggregating findings across all diagnostic domains",
+      "status": "implemented"
+    },
+    "trend-tracker": {
+      "description": "Cross-scan trend tracking with NEW/RESOLVED/RECURRING classification and inline report badges",
       "status": "implemented"
     }
   }
