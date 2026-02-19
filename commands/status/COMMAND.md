@@ -221,6 +221,8 @@ echo ""
 echo "## Available Commands"
 echo "- /connect [site-name] -- Connect to a WordPress site"
 echo "- /diagnose [mode] [on site-name] -- Run diagnostic scan (modes: full, security only, code only)"
+echo "- /batch [site1 site2 ...] [mode] -- Run diagnostics across multiple sites with comparison matrix"
+echo "- /investigate -- Full diagnostic investigation with intake and verification"
 echo "- /status -- View connected sites and scan results"
 ```
 

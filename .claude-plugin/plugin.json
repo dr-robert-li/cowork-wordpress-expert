@@ -21,6 +21,10 @@
     "investigate": {
       "description": "Full-workflow investigation: intake questioning, site scouting, smart skill planning, parallel execution, and findings verification",
       "status": "implemented"
+    },
+    "batch": {
+      "description": "Run diagnostics across multiple saved site profiles with comparison matrix",
+      "status": "implemented"
     }
   },
   "skills": {
